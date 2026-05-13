@@ -1,0 +1,141 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Misi - Illustrium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'dashboard/style.css?v=2.2' %}">
+    <script src="{% static 'dashboard/script.js' %}?v=2.0" defer></script>
+</head>
+<body>
+    <div class="dashboard-container two-columns">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon"><i class="fa-solid fa-layer-group"></i></div>
+                    <h2 class="sidebar-text">Illustrium</h2>
+                </div>
+                <p class="subtitle sidebar-text">Belajar Gambar Vektor</p>
+                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+                    <i class="fa-solid fa-chevron-left" id="toggleIcon"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="{% url 'index' %}" data-tooltip="Dashboard"><i class="fa-solid fa-house"></i><span class="sidebar-text"> Dashboard</span></a></li>
+                    <li class="active"><a href="{% url 'misi' %}" data-tooltip="Misi"><i class="fa-solid fa-bullseye"></i><span class="sidebar-text"> Misi</span></a></li>
+                    <li><a href="{% url 'kursus' %}" data-tooltip="Kursus"><i class="fa-solid fa-book-open"></i><span class="sidebar-text"> Kursus</span></a></li>
+                    <li><a href="{% url 'leaderboard' %}" data-tooltip="Leaderboard"><i class="fa-solid fa-trophy"></i><span class="sidebar-text"> Leaderboard</span></a></li>
+                    <li><a href="{% url 'komunitas' %}" data-tooltip="Komunitas"><i class="fa-solid fa-users"></i><span class="sidebar-text"> Komunitas</span></a></li>
+                    <li><a href="{% url 'pengaturan' %}" data-tooltip="Pengaturan"><i class="fa-solid fa-gear"></i><span class="sidebar-text"> Pengaturan</span></a></li>
+                    {% if request.user.is_staff %}
+                    <li class="admin-link"><a href="{% url 'admin_dashboard' %}" data-tooltip="Admin Panel"><i class="fa-solid fa-shield-halved"></i><span class="sidebar-text"> Admin Panel</span></a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer"><button id="themeToggleBtn" style="background:var(--panel-bg); border:1px solid var(--panel-border); color:var(--text-secondary); width:100%; padding:10px; border-radius:12px; margin-bottom:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:0.2s;"><i class="fa-solid fa-moon"></i><span class="sidebar-text">Tema Malam</span></button>
+                <div class="user-profile">
+                    <img src="{{ request.user.userprofile.avatar_url }}" alt="Avatar" class="avatar">
+                    <div class="user-info">
+                        <div class="user-details-header">
+                            <h4>{{ request.user.first_name|default:request.user.username }}</h4>
+                            <span class="user-level">Lvl. {{ profile.level }}</span>
+                        </div>
+                        <a href="{% url 'logout' %}" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- KONTEN UTAMA -->
+        <main class="main-content">
+            <header class="section-header" style="margin-bottom: 32px;">
+                <div>
+                    <h1 style="font-size: 2.2rem; margin-bottom: 8px;">{{ page_title }}</h1>
+                    <p>Selesaikan misi untuk mendapatkan XP dan Badge eksklusif.</p>
+                </div>
+            </header>
+
+            <div class="mission-tabs">
+                <div class="tab active" data-filter="active">Misi Aktif ({{ active_count }})</div>
+                <div class="tab" data-filter="completed">Selesai ({{ completed_count }})</div>
+                <div class="tab" data-filter="locked">Terkunci ({{ locked_count }})</div>
+            </div>
+
+            <div class="missions-grid">
+                {% for item in mission_list %}
+                <div class="mission-item-card glass-panel {% if item.status == 'completed' %}completed{% endif %}" data-category="{% if item.status == 'completed' %}completed{% elif item.is_locked %}locked{% else %}active{% endif %}">
+                    <i class="fa-solid fa-wand-magic-sparkles mission-icon"></i>
+                    <h3 style="margin-bottom: 8px;">{{ item.mission.title }}</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px;">{{ item.mission.description }}</p>
+                    
+                    {% if item.is_locked %}
+                    <div class="cta-button" style="width: 100%; justify-content: center; padding: 10px; background: rgba(255,255,255,0.03); color: var(--text-muted); cursor: not-allowed; opacity: 0.6;">
+                        <i class="fa-solid fa-lock"></i> Terkunci
+                    </div>
+
+                    {% elif item.status == 'not_started' %}
+                    <a href="{% url 'misi_materi' item.mission.id %}" class="cta-button" style="text-decoration: none; width: 100%; justify-content: center; padding: 10px; background: rgba(255,255,255,0.05); color: var(--text-primary);">Mulai Misi</a>
+                    
+                    {% elif item.status == 'reading' %}
+                    <a href="{% url 'misi_materi' item.mission.id %}" class="cta-button" style="text-decoration: none; width: 100%; justify-content: center; padding: 10px;">Lanjutkan Materi</a>
+                    
+                    {% elif item.status == 'quiz' %}
+                    <a href="{% url 'misi_kuis' item.mission.id %}" class="cta-button" style="text-decoration: none; width: 100%; justify-content: center; padding: 10px; background: rgba(241, 196, 15, 0.2); color: #f1c40f;">Lanjutkan Kuis</a>
+                    
+                    {% elif item.status == 'evaluation' %}
+                    <a href="{% url 'misi_evaluasi' item.mission.id %}" class="cta-button" style="text-decoration: none; width: 100%; justify-content: center; padding: 10px; background: rgba(255, 99, 132, 0.2); color: #ff6b6b;">Lanjutkan Evaluasi</a>
+                    
+                    {% elif item.status == 'completed' %}
+                    <div class="mission-reward" style="color: var(--accent-green); text-align: center; margin-top: 10px;">
+                        <i class="fa-solid fa-check"></i> Selesai
+                    </div>
+                    {% endif %}
+                    
+                    {% if item.status != 'completed' and not item.is_locked %}
+                    <div class="mission-reward">
+                        <i class="fa-solid fa-star"></i> +{{ item.mission.xp_reward }} XP
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary);">Belum ada misi tersedia saat ini.</p>
+                {% endfor %}
+            </div>
+            
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.mission-tabs .tab');
+    const cards = document.querySelectorAll('.mission-item-card');
+
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            tabs.forEach(function(t) { t.classList.remove('active'); });
+            tab.classList.add('active');
+
+            var filter = tab.getAttribute('data-filter');
+            cards.forEach(function(card) {
+                if (filter === 'all' || card.getAttribute('data-category') === filter) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+</body>
+</html>

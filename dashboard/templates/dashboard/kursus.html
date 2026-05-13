@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kursus - Illustrium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'dashboard/style.css?v=2.2' %}">
+    <script src="{% static 'dashboard/script.js' %}?v=2.0" defer></script>
+</head>
+<body>
+    <div class="dashboard-container two-columns">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon"><i class="fa-solid fa-layer-group"></i></div>
+                    <h2 class="sidebar-text">Illustrium</h2>
+                </div>
+                <p class="subtitle sidebar-text">Belajar Gambar Vektor</p>
+                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+                    <i class="fa-solid fa-chevron-left" id="toggleIcon"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="{% url 'index' %}" data-tooltip="Dashboard"><i class="fa-solid fa-house"></i><span class="sidebar-text"> Dashboard</span></a></li>
+                    <li><a href="{% url 'misi' %}" data-tooltip="Misi"><i class="fa-solid fa-bullseye"></i><span class="sidebar-text"> Misi</span></a></li>
+                    <li class="active"><a href="{% url 'kursus' %}" data-tooltip="Kursus"><i class="fa-solid fa-book-open"></i><span class="sidebar-text"> Kursus</span></a></li>
+                    <li><a href="{% url 'leaderboard' %}" data-tooltip="Leaderboard"><i class="fa-solid fa-trophy"></i><span class="sidebar-text"> Leaderboard</span></a></li>
+                    <li><a href="{% url 'komunitas' %}" data-tooltip="Komunitas"><i class="fa-solid fa-users"></i><span class="sidebar-text"> Komunitas</span></a></li>
+                    <li><a href="{% url 'pengaturan' %}" data-tooltip="Pengaturan"><i class="fa-solid fa-gear"></i><span class="sidebar-text"> Pengaturan</span></a></li>
+                    {% if request.user.is_staff %}
+                    <li class="admin-link"><a href="{% url 'admin_dashboard' %}" data-tooltip="Admin Panel"><i class="fa-solid fa-shield-halved"></i><span class="sidebar-text"> Admin Panel</span></a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer"><button id="themeToggleBtn" style="background:var(--panel-bg); border:1px solid var(--panel-border); color:var(--text-secondary); width:100%; padding:10px; border-radius:12px; margin-bottom:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:0.2s;"><i class="fa-solid fa-moon"></i><span class="sidebar-text">Tema Malam</span></button>
+                <div class="user-profile">
+                    <img src="{{ request.user.userprofile.avatar_url }}" alt="Avatar" class="avatar">
+                    <div class="user-info">
+                        <div class="user-details-header">
+                            <h4>{{ request.user.first_name|default:request.user.username }}</h4>
+                            <span class="user-level">Lvl. {{ profile.level }}</span>
+                        </div>
+                        <a href="{% url 'logout' %}" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- KONTEN UTAMA -->
+        <main class="main-content">
+            <header class="section-header" style="margin-bottom: 24px;">
+                <div>
+                    <h1 style="font-size: 2.2rem; margin-bottom: 8px;">Katalog Kursus Vektor</h1>
+                    <p>Kuasai dunia gambar vektor dengan materi lengkap dan terstruktur.</p>
+                </div>
+            </header>
+
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="Cari kursus vektor, topik, atau tools...">
+                <button class="cta-button"><i class="fa-solid fa-search"></i> Cari</button>
+            </div>
+
+            <div class="courses-grid">
+                {% for course in courses %}
+                <div class="course-card glass-panel">
+                    <div class="course-image" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                        {% if course.image %}
+                        <img src="{{ course.image.url }}" alt="{{ course.title }}">
+                        {% else %}
+                        <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:white; font-size:3rem;">
+                            <i class="fa-solid {{ course.icon }}"></i>
+                        </div>
+                        {% endif %}
+                        <div class="course-badge" style="color: #fbbf24;"><i class="fa-solid fa-star"></i> 4.9</div>
+                    </div>
+                    <div class="course-content">
+                        <div class="course-meta">
+                            <span><i class="fa-solid fa-layer-group"></i> {{ course.missions.count }} Misi</span>
+                        </div>
+                        <h3>{{ course.title }}</h3>
+                        <p>{{ course.description|truncatechars:100 }}</p>
+                        <div class="course-footer">
+                            <div class="author-info">
+                                <img src="https://i.pravatar.cc/150?img={{ forloop.counter|add:10 }}" alt="Mentor">
+                                <span>Mentor Illustrium</span>
+                            </div>
+                            <a href="{% url 'misi' %}?course_id={{ course.id }}" class="cta-button" style="padding: 6px 12px; font-size: 0.8rem; text-decoration:none;">Mulai</a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-secondary);">
+                    Belum ada kursus yang tersedia saat ini.
+                </div>
+                {% endfor %}
+            </div>
+            
+        </main>
+    </div>
+</body>
+</html>

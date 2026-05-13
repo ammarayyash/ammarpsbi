@@ -1,0 +1,123 @@
+{% extends 'dashboard/admin/base_admin.html' %}
+
+{% block title %}Kelola Community Rooms{% endblock %}
+
+{% block content %}
+<div class="admin-content">
+    <div class="admin-header">
+        <h1>Kelola Community Rooms</h1>
+        <button class="cta-button" onclick="document.getElementById('createModal').style.display='flex'">
+            <i class="fa-solid fa-plus"></i> Buat Room Baru
+        </button>
+    </div>
+
+    <div class="admin-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nama Room</th>
+                    <th>Token</th>
+                    <th>Konten</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for room in rooms %}
+                <tr>
+                    <td>{{ room.name }}</td>
+                    <td><code>{{ room.token }}</code></td>
+                    <td>{{ room.content|truncatechars:50 }}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editRoom({{ room.id }}, '{{ room.name }}', '{{ room.token }}', '{{ room.content|escapejs }}', {{ room.store_scores|yesno:'true,false' }})">
+                            <i class="fa-solid fa-edit"></i> Edit
+                        </button>
+                        <form method="post" style="display:inline;" onsubmit="return confirm('Hapus room ini?')">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete_room">
+                            <input type="hidden" name="room_id" value="{{ room.id }}">
+                            <button type="submit" name="delete" class="btn-delete">
+                                <i class="fa-solid fa-trash"></i> Hapus
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Buat Room Baru</h2>
+            <span class="close" onclick="document.getElementById('createModal').style.display='none'">&times;</span>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_room">
+            <div class="form-group">
+                <label>Nama Room</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="form-group">
+                <label>Token</label>
+                <input type="text" name="token" required>
+            </div>
+            <div class="form-group">
+                <label>Konten (Pertanyaan/Kuis)</label>
+                <textarea name="content" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <label><input type="checkbox" name="store_scores"> Simpan Nilai (aktifkan untuk menyimpan submission)</label>
+            </div>
+            <button type="submit" name="create" class="cta-button">Buat Room</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Room</h2>
+            <span class="close" onclick="document.getElementById('editModal').style.display='none'">&times;</span>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_room">
+            <input type="hidden" name="room_id" id="editRoomId">
+            <div class="form-group">
+                <label>Nama Room</label>
+                <input type="text" name="name" id="editName" required>
+            </div>
+            <div class="form-group">
+                <label>Token</label>
+                <input type="text" name="token" id="editToken" required>
+            </div>
+            <div class="form-group">
+                <label>Konten (Pertanyaan/Kuis)</label>
+                <textarea name="content" id="editContent" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <label><input type="checkbox" name="store_scores" id="editStoreScores"> Simpan Nilai (aktifkan untuk menyimpan submission)</label>
+            </div>
+            <button type="submit" name="update" class="cta-button">Perbarui Room</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function editRoom(id, name, token, content, storeScores) {
+    document.getElementById('editRoomId').value = id;
+    document.getElementById('editName').value = name;
+    document.getElementById('editToken').value = token;
+    document.getElementById('editContent').value = content;
+    try {
+        document.getElementById('editStoreScores').checked = !!storeScores;
+    } catch (e) {}
+    document.getElementById('editModal').style.display = 'flex';
+}
+</script>
+{% endblock %}

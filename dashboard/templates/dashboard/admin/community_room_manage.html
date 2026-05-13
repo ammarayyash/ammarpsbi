@@ -1,0 +1,220 @@
+{% extends 'dashboard/admin/base_admin.html' %}
+
+{% block title %}Manage Room - {{ room.name }}{% endblock %}
+
+{% block content %}
+<div class="admin-content">
+    <div class="admin-header">
+        <h1>Kelola Konten: {{ room.name }}</h1>
+        <div style="display:flex; gap:8px;">
+            <a href="{% url 'admin_community_rooms' %}" class="btn btn-ghost">← Kembali</a>
+            <button class="cta-button" onclick="document.getElementById('createMaterialModal').style.display='flex'">Tambah Materi</button>
+            <button class="cta-button" onclick="document.getElementById('createQuestionModal').style.display='flex'">Tambah Soal</button>
+        </div>
+    </div>
+
+    <section style="margin-top:12px;">
+        <h2>Materi</h2>
+        {% if materials %}
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            {% for m in materials %}
+            <div style="padding:12px; border:1px solid var(--panel-border); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong>{{ m.title }}</strong>
+                    <div style="color:var(--text-secondary);">{{ m.body|truncatechars:200 }}</div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-ghost" onclick="openEditMaterial({{ m.id }}, '{{ m.title|escapejs }}', '{{ m.body|escapejs }}', '{{ m.media_url|default:''|escapejs }}')">Edit</button>
+                    <form method="post" style="display:inline;" onsubmit="return confirm('Hapus materi ini?')">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_material">
+                        <input type="hidden" name="material_id" value="{{ m.id }}">
+                        <button type="submit" class="btn btn-delete">Hapus</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color:var(--text-secondary);">Belum ada materi.</p>
+        {% endif %}
+    </section>
+
+    <section style="margin-top:18px;">
+        <h2>Soal Kuis</h2>
+        {% if questions %}
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            {% for q in questions %}
+            <div style="padding:12px; border:1px solid var(--panel-border); border-radius:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+                    <div style="flex:1;">
+                        <strong>{{ forloop.counter }}. {{ q.question_text|truncatechars:200 }}</strong>
+                        <ul style="margin:8px 0 0 0; padding-left:18px; color:var(--text-secondary);">
+                            <li>A. {{ q.option_a }}</li>
+                            <li>B. {{ q.option_b }}</li>
+                            <li>C. {{ q.option_c }}</li>
+                            <li>D. {{ q.option_d }}</li>
+                        </ul>
+                        <div style="margin-top:8px; color:var(--text-secondary);">Kunci: {{ q.correct_option }} {% if q.explanation %}- Penjelasan: {{ q.explanation|truncatechars:150 }}{% endif %}</div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <button class="btn btn-ghost" onclick="openEditQuestion({{ q.id }}, '{{ q.question_text|escapejs }}', '{{ q.option_a|escapejs }}', '{{ q.option_b|escapejs }}', '{{ q.option_c|escapejs }}', '{{ q.option_d|escapejs }}', '{{ q.correct_option }}', '{{ q.explanation|escapejs }}')">Edit</button>
+                        <form method="post" style="display:inline;" onsubmit="return confirm('Hapus soal ini?')">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete_question">
+                            <input type="hidden" name="question_id" value="{{ q.id }}">
+                            <button type="submit" class="btn btn-delete">Hapus</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color:var(--text-secondary);">Belum ada soal kuis.</p>
+        {% endif %}
+    </section>
+
+    <section style="margin-top:18px;">
+        <h2>Submissions Terbaru</h2>
+        {% if room.store_scores %}
+            {% if recent_submissions %}
+            <table style="width:100%; border-collapse:collapse; margin-top:8px;">
+                <thead>
+                    <tr style="text-align:left; border-bottom:1px solid var(--panel-border);">
+                        <th>Waktu</th>
+                        <th>User</th>
+                        <th>Skor</th>
+                        <th>Total Soal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in recent_submissions %}
+                    <tr>
+                        <td>{{ s.submitted_at }}</td>
+                        <td>{{ s.user.username }}</td>
+                        <td>{{ s.score }}</td>
+                        <td>{{ s.total_questions }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="color:var(--text-secondary);">Belum ada submission tersimpan.</p>
+            {% endif %}
+        {% else %}
+            <p style="color:var(--text-secondary);">Room ini berjalan dalam classic mode; submission tidak disimpan.</p>
+        {% endif %}
+    </section>
+
+</div>
+
+<!-- Create Material Modal -->
+<div id="createMaterialModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header"><h3>Tambah Materi</h3><span class="close" onclick="document.getElementById('createMaterialModal').style.display='none'">&times;</span></div>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_material">
+            <div class="form-group"><label>Judul</label><input type="text" name="title" required></div>
+            <div class="form-group"><label>Isi</label><textarea name="body" rows="4"></textarea></div>
+            <div class="form-group"><label>Link Media (opsional)</label><input type="url" name="media_url"></div>
+            <div class="form-group"><label>File Media (opsional)</label><input type="file" name="media_file"></div>
+            <div style="display:flex; gap:8px;"><button class="cta-button" type="submit">Tambah</button><button type="button" class="btn btn-ghost" onclick="document.getElementById('createMaterialModal').style.display='none'">Batal</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Material Modal -->
+<div id="editMaterialModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header"><h3>Edit Materi</h3><span class="close" onclick="document.getElementById('editMaterialModal').style.display='none'">&times;</span></div>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_material">
+            <input type="hidden" name="material_id" id="editMaterialId">
+            <div class="form-group"><label>Judul</label><input type="text" name="title" id="editMaterialTitle" required></div>
+            <div class="form-group"><label>Isi</label><textarea name="body" id="editMaterialBody" rows="4"></textarea></div>
+            <div class="form-group"><label>Link Media (opsional)</label><input type="url" name="media_url" id="editMaterialUrl"></div>
+            <div class="form-group"><label>File Media (opsional)</label><input type="file" name="media_file"></div>
+            <div style="display:flex; gap:8px;"><button class="cta-button" type="submit">Simpan</button><button type="button" class="btn btn-ghost" onclick="document.getElementById('editMaterialModal').style.display='none'">Batal</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Create Question Modal -->
+<div id="createQuestionModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header"><h3>Tambah Soal Pilihan Ganda</h3><span class="close" onclick="document.getElementById('createQuestionModal').style.display='none'">&times;</span></div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_question">
+            <div class="form-group"><label>Soal</label><textarea name="question_text" rows="3" required></textarea></div>
+            <div class="form-group"><label>Opsi A</label><input type="text" name="option_a" required></div>
+            <div class="form-group"><label>Opsi B</label><input type="text" name="option_b" required></div>
+            <div class="form-group"><label>Opsi C</label><input type="text" name="option_c" required></div>
+            <div class="form-group"><label>Opsi D</label><input type="text" name="option_d" required></div>
+            <div class="form-group"><label>Kunci Jawaban</label>
+                <select name="correct_option">
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Penjelasan (opsional)</label><textarea name="explanation" rows="2"></textarea></div>
+            <div style="display:flex; gap:8px;"><button class="cta-button" type="submit">Tambah Soal</button><button type="button" class="btn btn-ghost" onclick="document.getElementById('createQuestionModal').style.display='none'">Batal</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Question Modal -->
+<div id="editQuestionModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header"><h3>Edit Soal</h3><span class="close" onclick="document.getElementById('editQuestionModal').style.display='none'">&times;</span></div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_question">
+            <input type="hidden" name="question_id" id="editQuestionId">
+            <div class="form-group"><label>Soal</label><textarea name="question_text" id="editQuestionText" rows="3" required></textarea></div>
+            <div class="form-group"><label>Opsi A</label><input type="text" name="option_a" id="editOptionA" required></div>
+            <div class="form-group"><label>Opsi B</label><input type="text" name="option_b" id="editOptionB" required></div>
+            <div class="form-group"><label>Opsi C</label><input type="text" name="option_c" id="editOptionC" required></div>
+            <div class="form-group"><label>Opsi D</label><input type="text" name="option_d" id="editOptionD" required></div>
+            <div class="form-group"><label>Kunci Jawaban</label>
+                <select name="correct_option" id="editCorrectOption">
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Penjelasan (opsional)</label><textarea name="explanation" id="editExplanation" rows="2"></textarea></div>
+            <div style="display:flex; gap:8px;"><button class="cta-button" type="submit">Simpan</button><button type="button" class="btn btn-ghost" onclick="document.getElementById('editQuestionModal').style.display='none'">Batal</button></div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEditMaterial(id, title, body, media_url) {
+    document.getElementById('editMaterialId').value = id;
+    document.getElementById('editMaterialTitle').value = title;
+    document.getElementById('editMaterialBody').value = body;
+    document.getElementById('editMaterialUrl').value = media_url;
+    document.getElementById('editMaterialModal').style.display = 'flex';
+}
+
+function openEditQuestion(id, text, a, b, c, d, correct, explanation) {
+    document.getElementById('editQuestionId').value = id;
+    document.getElementById('editQuestionText').value = text;
+    document.getElementById('editOptionA').value = a;
+    document.getElementById('editOptionB').value = b;
+    document.getElementById('editOptionC').value = c;
+    document.getElementById('editOptionD').value = d;
+    document.getElementById('editCorrectOption').value = correct;
+    document.getElementById('editExplanation').value = explanation;
+    document.getElementById('editQuestionModal').style.display = 'flex';
+}
+</script>
+
+{% endblock %}

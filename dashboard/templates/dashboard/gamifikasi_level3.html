@@ -1,0 +1,312 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Level 3 – Color Alchemist</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a1a;--card:rgba(255,255,255,.05);--border:rgba(255,255,255,.1);--accent:#ec4899;--green:#22c55e;--red:#ef4444}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:#f0f0f5;min-height:100vh;overflow-x:hidden}
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+.bg span{position:absolute;border-radius:50%;filter:blur(90px);opacity:.25;animation:fl 10s ease-in-out infinite alternate}
+.bg span:nth-child(1){width:500px;height:500px;background:#be185d;top:-10%;left:-10%}
+.bg span:nth-child(2){width:350px;height:350px;background:#9d174d;bottom:-10%;right:-5%;animation-delay:4s}
+.bg span:nth-child(3){width:280px;height:280px;background:#6d28d9;top:40%;left:55%;animation-delay:7s}
+@keyframes fl{to{transform:translate(30px,-20px) scale(1.1)}}
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:24px 16px;min-height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px}
+.level-badge{background:linear-gradient(135deg,#be185d,#ec4899);padding:6px 18px;border-radius:20px;font-weight:700;font-size:.85rem;letter-spacing:1px}
+.score-disp{font-size:1.1rem;font-weight:700;color:var(--accent)}
+.quit-btn{background:var(--card);border:1px solid var(--border);color:#fff;padding:8px 18px;border-radius:20px;font-family:inherit;font-size:.85rem;cursor:pointer;text-decoration:none;transition:.2s}
+.quit-btn:hover{background:rgba(239,68,68,.3)}
+.prog-wrap{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.prog-track{flex:1;height:8px;background:rgba(255,255,255,.1);border-radius:20px;overflow:hidden}
+.prog-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#be185d,#ec4899);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.prog-text{font-size:.85rem;font-weight:600;white-space:nowrap}
+.q-area{text-align:center;margin-bottom:24px}
+.q-num{font-size:.8rem;font-weight:700;color:var(--accent);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+.q-text{font-size:1.2rem;font-weight:700;line-height:1.5;animation:fadeUp .4s ease}
+.q-text strong{color:#fbbf24}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* Part A layout */
+.part-a{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start;animation:fadeUp .4s ease}
+.scene-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:.3s}
+.scene-wrap svg{width:100%;display:block}
+.palette-list{display:flex;flex-direction:column;gap:12px;min-width:160px}
+.palette-card{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:12px;cursor:pointer;transition:.2s}
+.palette-card:hover{border-color:var(--accent);transform:scale(1.03)}
+.palette-card.selected{border-color:var(--accent)}
+.palette-card.correct{border-color:var(--green)!important;box-shadow:0 0 18px rgba(34,197,94,.4)!important}
+.palette-card.wrong{border-color:var(--red)!important;animation:shake .4s}
+.palette-swatches{display:flex;gap:4px;margin-bottom:6px}
+.swatch{width:32px;height:32px;border-radius:6px;flex:1}
+.palette-name{font-size:.75rem;font-weight:600;text-align:center;opacity:.7}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* Part B slider */
+.part-b{animation:fadeUp .4s ease}
+.slider-scene{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+.sky-preview{width:240px;height:200px;border-radius:16px;flex-shrink:0;transition:background .3s;border:2px solid var(--border);overflow:hidden;position:relative}
+.sky-preview svg{width:100%;height:100%;position:absolute;top:0;left:0}
+.slider-controls{flex:1;min-width:220px}
+.slider-row{margin-bottom:18px}
+.slider-label{display:flex;justify-content:space-between;font-size:.85rem;font-weight:600;margin-bottom:6px}
+.slider-label span:last-child{font-weight:700;font-family:monospace}
+input[type=range]{width:100%;height:8px;border-radius:20px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none}
+input[type=range].r-slider{background:linear-gradient(to right,#1a1a1a,#ff0000)}
+input[type=range].g-slider{background:linear-gradient(to right,#1a1a1a,#00ff00)}
+input[type=range].b-slider{background:linear-gradient(to right,#1a1a1a,#0000ff)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:white;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.color-display{display:flex;align-items:center;gap:12px;margin-top:16px;padding:12px;background:var(--card);border-radius:10px;border:1px solid var(--border)}
+.color-box{width:48px;height:48px;border-radius:8px;flex-shrink:0;border:2px solid var(--border);transition:background .1s}
+.color-hex{font-family:monospace;font-size:.9rem;font-weight:700;color:var(--accent)}
+.target-row{display:flex;align-items:center;gap:12px;margin-top:8px;font-size:.85rem;opacity:.7}
+.target-box{width:36px;height:36px;border-radius:6px;background:rgb(220,80,130);border:2px solid rgba(255,255,255,.2)}
+.cek-btn{background:linear-gradient(135deg,#be185d,#ec4899);border:none;color:white;padding:12px 32px;border-radius:24px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:20px;transition:.2s;width:100%}
+.cek-btn:hover{transform:scale(1.03);box-shadow:0 6px 24px rgba(236,72,153,.4)}
+.score-bar-wrap{margin-top:16px;background:rgba(255,255,255,.08);border-radius:12px;height:12px;overflow:hidden}
+.score-bar{height:100%;border-radius:12px;background:linear-gradient(90deg,#be185d,#f472b6);transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+/* Result */
+.result-screen{text-align:center;padding:40px 20px;animation:fadeUp .5s ease}
+.result-score{font-size:4rem;font-weight:900;background:linear-gradient(135deg,#ec4899,#f9a8d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.result-btn{background:linear-gradient(135deg,#be185d,#ec4899);border:none;color:#fff;padding:14px 40px;border-radius:30px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s}
+.result-btn:hover{transform:scale(1.05);box-shadow:0 8px 30px rgba(236,72,153,.4)}
+.next-btn{background:linear-gradient(135deg,#be185d,#ec4899);border:none;color:white;padding:11px 28px;border-radius:20px;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:16px;transition:.2s}
+.next-btn:hover{transform:scale(1.04)}
+.feedback-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(10,10,30,.97);border:1px solid var(--border);border-radius:12px;padding:14px 28px;font-size:.95rem;font-weight:600;transition:.4s;opacity:0;z-index:100}
+.feedback-toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.feedback-toast.green{border-color:var(--green);color:var(--green)}
+.feedback-toast.red{border-color:var(--red);color:var(--red)}
+.hidden{display:none}
+@media(max-width:640px){.part-a{grid-template-columns:1fr}.palette-list{flex-direction:row;overflow-x:auto;min-width:unset}.slider-scene{flex-direction:column}.sky-preview{width:100%}}
+</style>
+</head>
+<body>
+<div class="bg"><span></span><span></span><span></span></div>
+<div class="wrap">
+  <div class="topbar">
+    <div class="level-badge">🎨 LEVEL 3</div>
+    <div class="score-disp">Skor: <span id="scoreDisp">0</span>/100</div>
+    <a href="{% url 'misi' %}" class="quit-btn"><i class="fa fa-xmark"></i> Keluar</a>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    <div class="prog-text" id="progText">Bagian A – 1/3</div>
+  </div>
+  <div class="q-area">
+    <div class="q-num" id="qNum">BAGIAN A – SOAL 1</div>
+    <div class="q-text" id="qText"></div>
+  </div>
+  <div id="partA" class="part-a"></div>
+  <div id="partB" class="part-b hidden"></div>
+  <div class="result-screen hidden" id="resultScreen"></div>
+</div>
+<div class="feedback-toast" id="toast"></div>
+<form id="scoreForm" method="POST" action="{% url 'gamifikasi_level3' %}">
+  {% csrf_token %}
+  <input type="hidden" name="score" id="scoreInput">
+</form>
+<script>
+(function(){
+const PALETTES={
+  pagi:{name:"🌅 Pagi",colors:["#FFE0B2","#FFA726","#A5D6A7"],sky:"#FFD580",mountain:"#B0BEC5",house:"#FFCC80",fg:"#A5D6A7",ground:"#8BC34A"},
+  siang:{name:"☀️ Siang",colors:["#87CEEB","#FDD835","#4CAF50"],sky:"#64B5F6",mountain:"#78909C",house:"#FF8A65",fg:"#388E3C",ground:"#558B2F"},
+  malam:{name:"🌙 Malam",colors:["#1A237E","#311B92","#1B5E20"],sky:"#0D1B5E",mountain:"#37474F",house:"#FFA000",fg:"#1B5E20",ground:"#1A2E0D"},
+};
+const PART_A=[
+  {q:"Klik palet yang membuat suasana <strong>PAGI</strong> pada ilustrasi.",correct:"pagi"},
+  {q:"Klik palet yang membuat suasana <strong>SIANG</strong> pada ilustrasi.",correct:"siang"},
+  {q:"Klik palet yang membuat suasana <strong>MALAM</strong> pada ilustrasi.",correct:"malam"},
+];
+let partAIdx=0,totalScore=0,currentColors=PALETTES.pagi;
+
+function buildSceneSVG(p){
+  return `<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${p.sky}"/><stop offset="100%" stop-color="${p.sky}cc"/></linearGradient></defs>
+    <rect width="300" height="200" fill="url(#skyG)"/>
+    <ellipse cx="40" cy="35" rx="22" ry="22" fill="${p.sky==='#0D1B5E'?'#FFF9C4':'#FFF176'}" opacity="${p.sky==='#0D1B5E'?'1':'.9'}"/>
+    ${p.sky==='#0D1B5E'?`<circle cx="220" cy="30" r="2" fill="white"/><circle cx="180" cy="18" r="1.5" fill="white"/><circle cx="260" cy="50" r="2" fill="white"/><circle cx="140" cy="40" r="1" fill="white"/>`:''}
+    <polygon points="0,140 80,60 160,140" fill="${p.mountain}"/>
+    <polygon points="100,140 200,50 300,140" fill="${p.mountain}" opacity=".8"/>
+    <rect x="0" y="140" width="300" height="60" fill="${p.ground}"/>
+    <rect x="50" y="100" width="60" height="40" rx="2" fill="${p.house}"/>
+    <polygon points="45,100 110,100 80,78" fill="${p.mountain==='#B0BEC5'?'#e57373':p.mountain==='#78909C'?'#c62828':'#5D4037'}"/>
+    <rect x="70" y="115" width="18" height="25" fill="${p.sky}" opacity=".5"/>
+    <rect x="54" y="110" width="10" height="10" fill="${p.sky}" opacity=".4"/>
+    <rect x="100" y="110" width="8" height="8" fill="${p.sky}" opacity=".4"/>
+    <polygon points="150,160 175,115 200,160" fill="${p.fg}" opacity=".8"/>
+    <polygon points="240,160 258,125 276,160" fill="${p.fg}"/>
+    <rect x="0" y="155" width="300" height="45" fill="${p.ground}" opacity=".5"/>
+  </svg>`;
+}
+
+function renderPartA(){
+  const q=PART_A[partAIdx];
+  document.getElementById('qNum').textContent='BAGIAN A – SOAL '+(partAIdx+1);
+  document.getElementById('qText').innerHTML=q.q;
+  document.getElementById('progFill').style.width=(((partAIdx)/4)*100)+'%';
+  document.getElementById('progText').textContent='Bagian A – '+(partAIdx+1)+'/3';
+  const paletteOrder=['pagi','siang','malam'];
+  const shuffled=[...paletteOrder].sort(()=>Math.random()-.5);
+  const pa=document.getElementById('partA');
+  pa.classList.remove('hidden');
+  pa.innerHTML=`
+    <div class="scene-wrap"><div id="sceneContainer">${buildSceneSVG(PALETTES.pagi)}</div></div>
+    <div class="palette-list" id="paletteList">
+      ${shuffled.map(k=>`
+        <div class="palette-card" id="pal-${k}" onclick="pickPalette('${k}','${q.correct}')">
+          <div class="palette-swatches">${PALETTES[k].colors.map(c=>`<div class="swatch" style="background:${c}"></div>`).join('')}</div>
+          <div class="palette-name">${PALETTES[k].name}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+window.pickPalette=function(key,correct){
+  document.getElementById('sceneContainer').innerHTML=buildSceneSVG(PALETTES[key]);
+  document.querySelectorAll('.palette-card').forEach(c=>c.style.pointerEvents='none');
+  const card=document.getElementById('pal-'+key);
+  if(key===correct){
+    card.classList.add('correct');
+    totalScore+=20;
+    document.getElementById('scoreDisp').textContent=totalScore;
+    showToast('✅ Benar! Palet '+PALETTES[key].name+' sesuai suasana yang diminta.','green');
+    partAIdx++;
+    setTimeout(()=>{
+      if(partAIdx<3)renderPartA();
+      else renderPartB();
+    },1500);
+  } else {
+    card.classList.add('wrong');
+    showToast('❌ Perhatikan suhu warna — pagi hangat, siang cerah, malam gelap.','red');
+    setTimeout(()=>{
+      document.querySelectorAll('.palette-card').forEach(c=>{c.style.pointerEvents='';c.classList.remove('wrong','correct')});
+    },900);
+  }
+};
+
+function renderPartB(){
+  document.getElementById('partA').classList.add('hidden');
+  document.getElementById('qNum').textContent='BAGIAN B – BONUS SLIDER';
+  document.getElementById('qText').innerHTML='Geser slider <strong>R, G, B</strong> hingga langit berwarna <strong>SENJA</strong> (oranye keunguan). Lalu klik CEK!';
+  document.getElementById('progFill').style.width='75%';
+  document.getElementById('progText').textContent='Bagian B – Slider Warna';
+  const pb=document.getElementById('partB');
+  pb.classList.remove('hidden');
+  pb.innerHTML=`
+    <div class="slider-scene">
+      <div class="sky-preview" id="skyPreview" style="background:rgb(128,128,128)">
+        <svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg">
+          <rect width="240" height="200" fill="transparent"/>
+          <polygon points="0,160 60,90 120,160" fill="rgba(0,0,0,.25)"/>
+          <polygon points="100,160 180,70 240,160" fill="rgba(0,0,0,.2)"/>
+          <rect x="0" y="160" width="240" height="40" fill="rgba(0,0,0,.35)"/>
+          <circle cx="200" cy="40" r="20" fill="rgba(255,255,255,.15)"/>
+        </svg>
+      </div>
+      <div class="slider-controls">
+        <div class="slider-row">
+          <div class="slider-label"><span>🔴 Red</span><span id="rVal">128</span></div>
+          <input type="range" class="r-slider" id="rSlider" min="0" max="255" value="128" oninput="updateColor()">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>🟢 Green</span><span id="gVal">128</span></div>
+          <input type="range" class="g-slider" id="gSlider" min="0" max="255" value="128" oninput="updateColor()">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>🔵 Blue</span><span id="bVal">128</span></div>
+          <input type="range" class="b-slider" id="bSlider" min="0" max="255" value="128" oninput="updateColor()">
+        </div>
+        <div class="color-display">
+          <div class="color-box" id="colorBox" style="background:rgb(128,128,128)"></div>
+          <div>
+            <div class="color-hex" id="colorHex">#808080</div>
+            <div style="font-size:.75rem;opacity:.5;margin-top:2px">Warna Anda</div>
+          </div>
+        </div>
+        <div class="target-row">
+          <div class="target-box"></div>
+          <span>Target: warna senja (oranye keunguan)</span>
+        </div>
+        <button class="cek-btn" onclick="cekWarna()"><i class="fa fa-check"></i> CEK Warna!</button>
+      </div>
+    </div>`;
+}
+
+window.updateColor=function(){
+  const r=document.getElementById('rSlider').value;
+  const g=document.getElementById('gSlider').value;
+  const b=document.getElementById('bSlider').value;
+  document.getElementById('rVal').textContent=r;
+  document.getElementById('gVal').textContent=g;
+  document.getElementById('bVal').textContent=b;
+  const hex='#'+[r,g,b].map(v=>parseInt(v).toString(16).padStart(2,'0')).join('');
+  document.getElementById('colorBox').style.background=`rgb(${r},${g},${b})`;
+  document.getElementById('skyPreview').style.background=`rgb(${r},${g},${b})`;
+  document.getElementById('colorHex').textContent=hex.toUpperCase();
+};
+
+window.cekWarna=function(){
+  const r=parseInt(document.getElementById('rSlider').value);
+  const g=parseInt(document.getElementById('gSlider').value);
+  const b=parseInt(document.getElementById('bSlider').value);
+  // Target sunset: R=220,G=80,B=130
+  const TR=220,TG=80,TB=130;
+  const dist=Math.sqrt((r-TR)**2+(g-TG)**2+(b-TB)**2);
+  const maxDist=Math.sqrt(255**2*3);
+  const accuracy=Math.max(0,1-dist/maxDist);
+  const bonusScore=Math.round(accuracy*40);
+  totalScore+=bonusScore;
+  document.getElementById('scoreDisp').textContent=Math.min(totalScore,100);
+  const pb=document.getElementById('partB');
+  pb.innerHTML+=`
+    <div style="margin-top:20px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;animation:fadeUp .4s ease">
+      <div style="font-size:1rem;font-weight:700;margin-bottom:8px;color:${bonusScore>=24?'var(--green)':'var(--accent)'}">
+        ${bonusScore>=32?'🎨 Sempurna!':bonusScore>=20?'✅ Hampir tepat!':'💡 Kurang senja'}
+      </div>
+      <p style="font-size:.85rem;opacity:.7;margin-bottom:12px">Akurasi warna: ${Math.round(accuracy*100)}% | Bonus: +${bonusScore}/40 poin</p>
+      <p style="font-size:.75rem;opacity:.5">Target warna senja: R=220 G=80 B=130 → rgb(220,80,130)</p>
+      <div class="score-bar-wrap"><div class="score-bar" style="width:${Math.round(accuracy*100)}%"></div></div>
+      <button class="next-btn" onclick="showResult()" style="margin-top:16px">Lihat Hasil →</button>
+    </div>`;
+  document.querySelector('.cek-btn').disabled=true;
+  document.querySelectorAll('input[type=range]').forEach(s=>s.disabled=true);
+};
+
+window.showResult=function(){
+  const finalScore=Math.min(totalScore,100);
+  document.getElementById('partB').classList.add('hidden');
+  document.getElementById('progFill').style.width='100%';
+  document.getElementById('progText').textContent='Selesai!';
+  const pass=finalScore>=60;
+  const rs=document.getElementById('resultScreen');
+  rs.classList.remove('hidden');
+  rs.innerHTML=`
+    <div style="font-size:5rem;margin-bottom:16px">${pass?'🏆':'💪'}</div>
+    <div class="result-score">${finalScore}/100</div>
+    <div class="result-msg">${pass?'Kamu adalah Ahli Warna sejati!':'Pelajari teori warna dan coba lagi!'}</div>
+    <button class="result-btn" onclick="submitScore(${finalScore})">${pass?'<i class="fa fa-arrow-right"></i> Lanjut':'<i class="fa fa-redo"></i> Coba Lagi'}</button>`;
+};
+
+window.submitScore=function(s){
+  document.getElementById('scoreInput').value=s;
+  document.getElementById('scoreForm').submit();
+};
+
+let toastTimer;
+function showToast(msg,type){
+  const t=document.getElementById('toast');
+  t.innerHTML=msg;t.className='feedback-toast '+type;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+renderPartA();
+})();
+</script>
+</body>
+</html>

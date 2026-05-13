@@ -1,0 +1,156 @@
+{% extends "dashboard/admin/base_admin.html" %}
+
+{% block title %}Kelola Pengguna{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">/</span>
+<span class="current">Kelola Pengguna</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div>
+        <h1>Kelola Pengguna</h1>
+        <p>Lihat dan kelola semua pengguna terdaftar di platform.</p>
+    </div>
+    <div>
+        <span class="status-badge staff" style="font-size: 0.9rem; padding: 8px 18px;">
+            <i class="fa-solid fa-users"></i>&nbsp; {{ users|length }} Pengguna
+        </span>
+    </div>
+</div>
+
+<div class="admin-table-container">
+    <div class="admin-table-header">
+        <h2>Daftar Pengguna</h2>
+        <div class="admin-search">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" placeholder="Cari nama atau email..." id="userSearch" onkeyup="filterUsers()">
+        </div>
+    </div>
+    <table class="admin-table" id="usersTable">
+        <thead>
+            <tr>
+                <th style="min-width: 220px;">Pengguna</th>
+                <th style="min-width: 80px;">Level</th>
+                <th style="min-width: 100px;">XP</th>
+                <th style="min-width: 130px;">Misi Selesai</th>
+                <th style="min-width: 130px;">Status</th>
+                <th style="min-width: 100px;">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td>
+                    <div class="table-user">
+                        <img src="https://i.pravatar.cc/150?u={{ u.email }}" alt="{{ u.username }}">
+                        <div class="table-user-info">
+                            <h4>{{ u.first_name|default:u.username }}</h4>
+                            <span>{{ u.email }}</span>
+                        </div>
+                    </div>
+                </td>
+                <td style="white-space: nowrap;">
+                    <span class="status-badge staff">Lvl&nbsp;{{ u.userprofile.level }}</span>
+                </td>
+                <td style="white-space: nowrap;">
+                    <div class="xp-badge">
+                        <i class="fa-solid fa-star"></i>
+                        &nbsp;{{ u.userprofile.xp }} XP
+                    </div>
+                </td>
+                <td style="white-space: nowrap; padding-left: 28px;">
+                    {{ u.completed_missions }}
+                </td>
+                <td style="white-space: nowrap;">
+                    {% if u.is_superuser %}
+                        <span class="status-badge superuser"><i class="fa-solid fa-crown"></i>&nbsp; Superuser</span>
+                    {% elif u.is_staff %}
+                        <span class="status-badge staff"><i class="fa-solid fa-shield-halved"></i>&nbsp; Staff</span>
+                    {% else %}
+                        <span class="status-badge user"><i class="fa-solid fa-user"></i>&nbsp; User</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="{% url 'admin_user_edit' u.id %}" class="btn btn-ghost btn-icon" title="Edit Pengguna">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
+                        {% if not u.is_superuser and u.id != request.user.id %}
+                        <button
+                            type="button"
+                            class="btn btn-danger btn-icon"
+                            title="Hapus Pengguna"
+                            onclick="confirmDelete('{{ u.first_name|default:u.username|escapejs }}', '{% url 'admin_user_delete' u.id %}')"
+                        >
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                        {% else %}
+                        <button type="button" class="btn btn-ghost btn-icon" title="Tidak bisa dihapus" style="opacity:0.4; cursor:not-allowed;">
+                            <i class="fa-solid fa-lock"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">
+                    <div class="admin-empty-state">
+                        <i class="fa-solid fa-users"></i>
+                        <h3>Belum ada pengguna</h3>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="delete-confirm-overlay" id="deleteModal">
+    <div class="delete-confirm-box">
+        <div class="delete-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3>Hapus Pengguna?</h3>
+        <p>Apakah kamu yakin ingin menghapus <strong id="deleteUserName"></strong>? Semua data progress dan jawaban pengguna ini akan dihapus secara permanen.</p>
+        <div class="delete-confirm-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">Batal</button>
+            <form id="deleteForm" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fa-solid fa-trash"></i> Hapus
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterUsers() {
+    const query = document.getElementById('userSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('#usersTable tbody tr');
+    rows.forEach(function(row) {
+        row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+    });
+}
+
+function confirmDelete(name, url) {
+    document.getElementById('deleteUserName').textContent = name;
+    document.getElementById('deleteForm').action = url;
+    document.getElementById('deleteModal').classList.add('active');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('active');
+}
+
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+});
+</script>
+{% endblock %}

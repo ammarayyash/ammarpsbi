@@ -1,0 +1,143 @@
+{% extends "dashboard/admin/base_admin.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">/</span>
+<span class="current">Overview</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div>
+        <h1>Dashboard Overview</h1>
+        <p>Selamat datang, {{ request.user.first_name|default:request.user.username }}! Berikut ringkasan platform.</p>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="admin-stats-grid">
+    <div class="admin-stat-card">
+        <div class="admin-stat-icon">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <div class="admin-stat-info">
+            <h3>{{ total_users }}</h3>
+            <p>Total Pengguna</p>
+        </div>
+    </div>
+    <div class="admin-stat-card">
+        <div class="admin-stat-icon">
+            <i class="fa-solid fa-bullseye"></i>
+        </div>
+        <div class="admin-stat-info">
+            <h3>{{ total_missions }}</h3>
+            <p>Total Misi</p>
+        </div>
+    </div>
+    <div class="admin-stat-card">
+        <div class="admin-stat-icon">
+            <i class="fa-solid fa-book-open"></i>
+        </div>
+        <div class="admin-stat-info">
+            <h3>{{ total_courses }}</h3>
+            <p>Total Kursus</p>
+        </div>
+    </div>
+    <div class="admin-stat-card">
+        <div class="admin-stat-icon">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="admin-stat-info">
+            <h3>{{ total_completed }}</h3>
+            <p>Misi Diselesaikan</p>
+        </div>
+    </div>
+    <div class="admin-stat-card">
+        <div class="admin-stat-icon">
+            <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div class="admin-stat-info">
+            <h3>{{ avg_xp }}</h3>
+            <p>Rata-rata XP</p>
+        </div>
+    </div>
+</div>
+
+<!-- Two Column Grid -->
+<div class="admin-grid-2">
+
+    <!-- Mission Completion Chart -->
+    <div class="admin-form-card">
+        <h2><i class="fa-solid fa-chart-bar" style="margin-right: 8px; color: var(--accent-blue);"></i> Penyelesaian per Misi</h2>
+        {% if mission_stats %}
+        <div class="admin-bar-chart">
+            {% for ms in mission_stats %}
+            <div class="admin-bar">
+                <div class="admin-bar-value">{{ ms.count }}</div>
+                <div class="admin-bar-fill" style="height: {{ ms.percentage }}%;"></div>
+                <div class="admin-bar-label">{{ ms.title|truncatechars:12 }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="admin-empty-state">
+            <i class="fa-solid fa-chart-bar"></i>
+            <h3>Belum ada data</h3>
+            <p>Data akan muncul saat ada misi yang diselesaikan.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Users -->
+    <div class="admin-form-card">
+        <h2><i class="fa-solid fa-user-clock" style="margin-right: 8px; color: var(--accent-green);"></i> Pengguna Terbaru</h2>
+        <div class="admin-activity-list">
+            {% for u in recent_users %}
+            <div class="admin-activity-item">
+                <div class="admin-activity-icon user-activity">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <div class="admin-activity-info">
+                    <h4>{{ u.first_name|default:u.username }}</h4>
+                    <span>{{ u.email }} &middot; Bergabung {{ u.date_joined|timesince }} lalu</span>
+                </div>
+                <div class="xp-badge">
+                    <i class="fa-solid fa-star"></i>
+                    {{ u.userprofile.xp }} XP
+                </div>
+            </div>
+            {% empty %}
+            <div class="admin-empty-state">
+                <i class="fa-solid fa-users"></i>
+                <h3>Belum ada pengguna</h3>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Recent Mission Completions -->
+<div class="admin-form-card">
+    <h2><i class="fa-solid fa-trophy" style="margin-right: 8px; color: #f59e0b;"></i> Misi Terbaru Diselesaikan</h2>
+    <div class="admin-activity-list">
+        {% for p in recent_completions %}
+        <div class="admin-activity-item">
+            <div class="admin-activity-icon mission-activity">
+                <i class="fa-solid fa-flag-checkered"></i>
+            </div>
+            <div class="admin-activity-info">
+                <h4>{{ p.user.first_name|default:p.user.username }} menyelesaikan <strong>{{ p.mission.title }}</strong></h4>
+                <span>{{ p.completed_at|timesince }} lalu &middot; +{{ p.mission.xp_reward }} XP</span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="admin-empty-state">
+            <i class="fa-solid fa-trophy"></i>
+            <h3>Belum ada misi diselesaikan</h3>
+            <p>Data akan muncul saat pengguna menyelesaikan misi.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

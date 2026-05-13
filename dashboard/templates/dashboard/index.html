@@ -1,0 +1,245 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Illustrium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'dashboard/style.css?v=2.2' %}">
+    <script src="{% static 'dashboard/script.js' %}?v=2.1" defer></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon"><i class="fa-solid fa-layer-group"></i></div>
+                    <h2 class="sidebar-text">Illustrium</h2>
+                </div>
+                <p class="subtitle sidebar-text">Belajar Gambar Vektor</p>
+                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+                    <i class="fa-solid fa-chevron-left" id="toggleIcon"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active"><a href="{% url 'index' %}" data-tooltip="Dashboard"><i class="fa-solid fa-house"></i><span class="sidebar-text"> Dashboard</span></a></li>
+                    <li><a href="{% url 'misi' %}" data-tooltip="Misi"><i class="fa-solid fa-bullseye"></i><span class="sidebar-text"> Misi</span></a></li>
+                    <li><a href="{% url 'kursus' %}" data-tooltip="Kursus"><i class="fa-solid fa-book-open"></i><span class="sidebar-text"> Kursus</span></a></li>
+                    <li><a href="{% url 'leaderboard' %}" data-tooltip="Leaderboard"><i class="fa-solid fa-trophy"></i><span class="sidebar-text"> Leaderboard</span></a></li>
+                    <li><a href="{% url 'komunitas' %}" data-tooltip="Komunitas"><i class="fa-solid fa-users"></i><span class="sidebar-text"> Komunitas</span></a></li>
+                    <li><a href="{% url 'pengaturan' %}" data-tooltip="Pengaturan"><i class="fa-solid fa-gear"></i><span class="sidebar-text"> Pengaturan</span></a></li>
+                    {% if request.user.is_staff %}
+                    <li class="admin-link"><a href="{% url 'admin_dashboard' %}" data-tooltip="Admin Panel"><i class="fa-solid fa-shield-halved"></i><span class="sidebar-text"> Admin Panel</span></a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer"><button id="themeToggleBtn" style="background:var(--panel-bg); border:1px solid var(--panel-border); color:var(--text-secondary); width:100%; padding:10px; border-radius:12px; margin-bottom:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:0.2s;"><i class="fa-solid fa-moon"></i><span class="sidebar-text">Tema Malam</span></button>
+                <div class="user-profile">
+                    <img src="{{ request.user.userprofile.avatar_url }}" alt="Avatar" class="avatar">
+                    <div class="user-info">
+                        <div class="user-details-header">
+                            <h4>{{ request.user.first_name|default:request.user.username }}</h4>
+                            <span class="user-level">Lvl. {{ profile.level }}</span>
+                        </div>
+                        <a href="{% url 'logout' %}" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- KONTEN UTAMA -->
+        <main class="main-content">
+            
+            <!-- LEVEL CARD -->
+            <section class="level-card glass-panel">
+                <div class="level-info">
+                    <div>
+                        <h1 class="level-title">Level {{ profile.level }} <span class="level-badge">– {{ level_title }}</span></h1>
+                        <p class="xp-text">Selesaikan misi vektor untuk naik level!</p>
+                    </div>
+                    <div class="xp-stats">
+                        <span class="xp-current">{{ xp_in_level }}</span>
+                        <span class="xp-total">/ {{ xp_next }} XP</span>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: {{ xp_pct }}%;"></div>
+                </div>
+            </section>
+
+            <!-- MISSION OVERVIEW -->
+            <section class="mission-card glass-panel">
+                <div class="mission-badge">
+                    {% if completed_count == total_missions and total_missions > 0 %}
+                        <i class="fa-solid fa-trophy"></i> Semua Misi Selesai!
+                    {% else %}
+                        <i class="fa-solid fa-bullseye"></i> Misi Pembelajaran Vektor
+                    {% endif %}
+                </div>
+                <div class="mission-content">
+                    <div class="mission-text">
+                        <h2>Menguasai Gambar Vektor</h2>
+                        <p>Pelajari perbedaan vektor dan raster, gunakan tools profesional, dan kuasai teknik Bezier curves. Selesaikan semua misi untuk jadi ahli vektor!</p>
+                        <a href="{% url 'misi' %}" class="cta-button" style="text-decoration:none;">
+                            {% if completed_count == total_missions and total_missions > 0 %}
+                                Lihat Misi <i class="fa-solid fa-check-double"></i>
+                            {% else %}
+                                Mulai Misi <i class="fa-solid fa-arrow-right"></i>
+                            {% endif %}
+                        </a>
+                    </div>
+                    <div class="mission-stats">
+                        <div class="stat-box">
+                            <i class="fa-solid fa-bullseye stat-icon"></i>
+                            <div class="stat-value">{{ total_missions }}</div>
+                            <div class="stat-label">Misi Tersedia</div>
+                        </div>
+                        <div class="stat-box">
+                            <i class="fa-solid fa-circle-check stat-icon"></i>
+                            <div class="stat-value">{{ completed_count }}</div>
+                            <div class="stat-label">Misi Selesai</div>
+                        </div>
+                        <div class="stat-box">
+                            <i class="fa-solid fa-bolt stat-icon"></i>
+                            <div class="stat-value">{{ profile.xp }}</div>
+                            <div class="stat-label">Total XP</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LEARNING PATH -->
+            <section class="learning-path glass-panel">
+                <div class="section-header">
+                    <div>
+                        <h2>Learning Path</h2>
+                        <p>Gambar Vektor Masterclass</p>
+                    </div>
+                    <div class="path-progress-text">{{ path_pct }}% Selesai</div>
+                </div>
+                
+                <div class="path-progress-container">
+                    <div class="path-progress-bar" style="width: {{ path_pct }}%;"></div>
+                </div>
+
+                <div class="modules-list">
+                    {% for item in mission_list %}
+                    <a href="{% if item.is_locked %}#{% else %}{% url 'misi_materi' item.mission.id %}{% endif %}" 
+                       style="text-decoration:none; color:inherit;{% if item.is_locked %} pointer-events:none;{% endif %}">
+                        <div class="module-item {% if item.is_completed %}completed{% elif item.is_active %}active{% elif item.is_locked %}locked{% endif %}">
+                            <div class="module-icon">
+                                {% if item.is_completed %}<i class="fa-solid fa-check"></i>
+                                {% elif item.is_locked %}<i class="fa-solid fa-lock"></i>
+                                {% else %}<i class="fa-solid fa-play"></i>{% endif %}
+                            </div>
+                            <div class="module-info">
+                                <h3>{{ item.mission.title }}</h3>
+                                <p>{{ item.mission.description|truncatechars:55 }}</p>
+                            </div>
+                            <div class="module-status">
+                                {% if item.is_completed %}Selesai
+                                {% elif item.is_locked %}Terkunci
+                                {% elif item.status == 'reading' %}Membaca
+                                {% elif item.status == 'quiz' or item.status == 'evaluation' %}Kuis
+                                {% else %}Mulai{% endif %}
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <p style="color:var(--text-muted); text-align:center; padding:24px;">Belum ada misi tersedia.</p>
+                    {% endfor %}
+                </div>
+            </section>
+        </main>
+
+        <!-- PANEL KANAN -->
+        <aside class="right-panel">
+            
+            <!-- DAILY STREAK -->
+            <section class="streak-card glass-panel">
+                <div class="streak-header">
+                    <i class="fa-solid fa-fire streak-icon"></i>
+                </div>
+                <div class="streak-content">
+                    <h2 class="streak-number">{{ profile.streak_days }}</h2>
+                    <p class="streak-label">Hari Berturut-turut</p>
+                </div>
+                <div class="streak-message">
+                    {% if profile.streak_days == 0 %}
+                        Mulai streak-mu dengan menyelesaikan misi hari ini!
+                    {% elif profile.streak_days < 7 %}
+                        Bagus! Pertahankan streak-mu dengan belajar setiap hari.
+                    {% elif profile.streak_days < 30 %}
+                        Luar biasa! Konsistensimu menginspirasi! 🔥
+                    {% else %}
+                        Legendaris! {{ profile.streak_days }} hari tanpa henti! 🏆
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- BADGE COLLECTION -->
+            <section class="badge-collection glass-panel">
+                <div class="section-header small">
+                    <h3>Koleksi Badge</h3>
+                    <span class="badge-counter">{{ earned_badges }}/{{ badge_defs|length }}</span>
+                </div>
+                
+                <div class="badge-grid">
+                    {% for badge in badge_defs %}
+                    <div class="badge-item {% if badge.condition %}earned{% else %}locked{% endif %}" title="{{ badge.name }}">
+                        <i class="fa-solid {{ badge.icon }}"></i>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <a href="{% url 'misi' %}" class="secondary-button" style="text-decoration:none; display:block; text-align:center;">Selesaikan Misi untuk Badge</a>
+            </section>
+
+            <!-- LEADERBOARD PREVIEW -->
+            <section class="leaderboard-preview glass-panel">
+                <div class="section-header small">
+                    <h3>Leaderboard</h3>
+                    <a href="{% url 'leaderboard' %}" class="view-all">Lihat Semua</a>
+                </div>
+                
+                <div class="leaderboard-list">
+                    {% for p in top3 %}
+                    <div class="leaderboard-item {% if p.user == request.user %}current-user-lb{% endif %}">
+                        <div class="rank {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">{{ forloop.counter }}</div>
+                        <img src="https://i.pravatar.cc/150?u={{ p.user.email }}" alt="{{ p.user.username }}" class="lb-avatar">
+                        <div class="lb-info">
+                            <h4>{{ p.user.first_name|default:p.user.username }}{% if p.user == request.user %} (Anda){% endif %}</h4>
+                            <span>{{ p.xp }} XP</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p style="color:var(--text-muted); font-size:0.85rem; text-align:center; padding:16px;">Belum ada data.</p>
+                    {% endfor %}
+
+                    {% if user_rank and user_rank > 3 %}
+                    <div class="leaderboard-item current-user-lb">
+                        <div class="rank">{{ user_rank }}</div>
+                        <img src="https://i.pravatar.cc/150?u={{ request.user.email }}" alt="Anda" class="lb-avatar">
+                        <div class="lb-info">
+                            <h4>{{ request.user.first_name|default:request.user.username }} (Anda)</h4>
+                            <span>{{ profile.xp }} XP</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+        </aside>
+
+    </div>
+</body>
+</html>

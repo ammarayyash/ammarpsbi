@@ -1,0 +1,317 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel{% endblock %} — Illustrium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'dashboard/style.css?v=2.2' %}">
+    <style>
+        body { overflow-x: hidden; }
+
+        /* ── Topbar ── */
+        .admin-topbar {
+            position: fixed;
+            top: 0; left: 270px;
+            width: calc(100% - 270px);
+            height: 56px;
+            background: rgba(10,11,18,0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            z-index: 90;
+            box-shadow: 0 1px 16px rgba(0,0,0,0.25);
+        }
+
+        .admin-topbar-left { display: flex; align-items: center; gap: 8px; }
+
+        /* ── Breadcrumb ── */
+        .admin-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+        .admin-breadcrumb a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .admin-breadcrumb a:hover { color: #a5b4fc; }
+        .admin-breadcrumb .sep { opacity: 0.3; font-size: 0.7rem; }
+        .admin-breadcrumb .current { color: var(--text-secondary); font-weight: 600; }
+
+        /* ── Topbar right ── */
+        .admin-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .topbar-user img {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid rgba(129,140,248,0.3);
+            object-fit: cover;
+            transition: border-color 0.2s;
+        }
+        .topbar-user:hover img {
+            border-color: rgba(129,140,248,0.6);
+        }
+        .topbar-user-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        .topbar-user-role {
+            font-size: 0.7rem;
+            color: #f87171;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        /* ── Main content offset for topbar ── */
+        .admin-main {
+            padding-top: calc(56px + 36px) !important;
+        }
+
+        /* ── Sidebar user card ── */
+        .admin-sidebar-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(139,92,246,0.04));
+            border: 1px solid rgba(99,102,241,0.1);
+            border-radius: 14px;
+            margin-top: auto;
+            padding-top: 16px;
+            margin-top: 20px;
+            transition: all 0.2s ease;
+        }
+        .admin-sidebar-user:hover {
+            background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.06));
+            border-color: rgba(99,102,241,0.18);
+        }
+        .admin-sidebar-user img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(129,140,248,0.3);
+            flex-shrink: 0;
+        }
+        .admin-sidebar-user-info h5 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        .admin-sidebar-user-info span {
+            font-size: 0.7rem;
+            color: #f87171;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ── Nav section label ── */
+        .admin-nav-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 6px 18px 6px;
+            margin-top: 4px;
+            margin-bottom: 2px;
+            opacity: 0.5;
+        }
+
+        /* ── Sidebar brand glow ── */
+        .admin-sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #818cf8, #a78bfa, transparent);
+        }
+
+        /* ── Alerts ── */
+        .admin-alert {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            animation: slideDown 0.3s ease;
+        }
+        .admin-alert.success {
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.25);
+            color: var(--accent-green);
+        }
+        .admin-alert.error {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.25);
+            color: #f87171;
+        }
+        .admin-alert.info {
+            background: rgba(99,102,241,0.1);
+            border: 1px solid rgba(99,102,241,0.25);
+            color: #818cf8;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+<div class="admin-container">
+
+    <!-- ====== FIXED SIDEBAR ====== -->
+    <aside class="admin-sidebar">
+        <!-- Logo -->
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-layer-group"></i></div>
+                <h2>Illustrium</h2>
+            </div>
+            <div class="admin-badge-label">
+                <i class="fa-solid fa-shield-halved"></i> Admin Panel
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="admin-nav">
+            <div class="admin-nav-label">Menu Utama</div>
+
+            <a href="{% url 'admin_dashboard' %}" class="{% if active_page == 'dashboard' %}active{% endif %}">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'admin_users' %}" class="{% if active_page == 'users' %}active{% endif %}">
+                <i class="fa-solid fa-users-gear"></i>
+                <span>Kelola Pengguna</span>
+            </a>
+            <a href="{% url 'admin_courses' %}" class="{% if active_page == 'courses' %}active{% endif %}">
+                <i class="fa-solid fa-book-open"></i>
+                <span>Kelola Kursus</span>
+            </a>
+            <a href="{% url 'admin_missions' %}" class="{% if active_page == 'missions' %}active{% endif %}">
+                <i class="fa-solid fa-bullseye"></i>
+                <span>Kelola Misi</span>
+            </a>
+
+            <div class="admin-nav-divider"></div>
+            <div class="admin-nav-label">Navigasi</div>
+
+            <a href="{% url 'index' %}" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Kembali ke LMS</span>
+            </a>
+            <a href="{% url 'logout' %}" class="back-link logout-link">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+
+        <!-- Current user info -->
+        <div class="admin-sidebar-user">
+            <img src="https://i.pravatar.cc/150?u={{ request.user.email }}" alt="Avatar">
+            <div class="admin-sidebar-user-info">
+                <h5>{{ request.user.first_name|default:request.user.username }}</h5>
+                <span><i class="fa-solid fa-shield-halved"></i> Administrator</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ====== TOP BAR ====== -->
+    <div class="admin-topbar">
+        <div class="admin-topbar-left">
+            <div class="admin-breadcrumb">
+                <a href="{% url 'admin_dashboard' %}">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+                {% block breadcrumb %}{% endblock %}
+            </div>
+        </div>
+        <div class="admin-topbar-right">
+            <div class="topbar-user">
+                <div style="text-align: right;">
+                    <div class="topbar-user-name">{{ request.user.first_name|default:request.user.username }}</div>
+                    <div class="topbar-user-role"><i class="fa-solid fa-shield-halved"></i> Admin</div>
+                </div>
+                <img src="https://i.pravatar.cc/150?u={{ request.user.email }}" alt="Avatar">
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== MAIN CONTENT ====== -->
+    <main class="admin-main">
+
+        <!-- Flash Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                {# Hide evaluation-related messages on admin pages to avoid noise #}
+                {% if 'Evaluasi' not in message %}
+                    <div class="admin-alert {{ message.tags }}" id="adm-alert-{{ forloop.counter }}">
+                        {% if message.tags == 'success' %}<i class="fa-solid fa-circle-check"></i>
+                        {% elif message.tags == 'error' %}<i class="fa-solid fa-circle-xmark"></i>
+                        {% else %}<i class="fa-solid fa-circle-info"></i>{% endif %}
+                        {{ message }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Auto-dismiss alerts
+    document.querySelectorAll('.admin-alert').forEach(function (el) {
+        setTimeout(function () {
+            el.style.transition = 'opacity 0.5s, transform 0.5s';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-8px)';
+            setTimeout(function () { el.remove(); }, 500);
+        }, 4000);
+    });
+
+    // Page fade-in
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity 0.3s ease';
+    setTimeout(function () { document.body.style.opacity = '1'; }, 20);
+});
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

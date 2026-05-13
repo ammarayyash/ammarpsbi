@@ -1,0 +1,510 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Level 2 – The Tracing Challenge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
+  <style>
+    body{font-family:'Outfit',sans-serif;background:#0b0b16;color:#eef;min-height:100vh}
+    .wrap{max-width:1100px;margin:24px auto;padding:20px}
+    .topbar{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .level-badge{background:#f59e0b;padding:8px 14px;border-radius:18px;color:#1c1200;font-weight:700}
+    .quit-btn{margin-left:auto;text-decoration:none;color:#fff;background:rgba(255,255,255,0.05);padding:8px 12px;border-radius:10px}
+    .canvas-wrapper{background:#1c1c2a;padding:12px;border-radius:12px;text-align:center}
+    #myCanvas{background:#2a2a3e;border-radius:6px;cursor:crosshair;display:block}
+    .toolbar{display:flex;gap:8px;margin-top:12px}
+    .tool-btn{padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.04);color:#fff;border:none;cursor:pointer;transition:0.2s}
+    .tool-btn.active{background:rgba(245,158,11,0.4);color:#f59e0b}
+    .tool-btn:hover{background:rgba(255,255,255,0.08)}
+    .action-btn{margin-top:12px;padding:10px 16px;border-radius:8px;background:linear-gradient(90deg,#d97706,#f59e0b);color:#1c1200;border:none;cursor:pointer;font-weight:600;transition:0.2s}
+    .action-btn:hover{transform:scale(1.02)}
+    .feedback{margin-top:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;min-height:40px;font-size:0.9rem}
+    .score-disp{font-weight:700;font-size:1.1rem}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="level-badge">Level 2 – The Tracing Challenge</div>
+      <div class="score-disp">Skor: <span id="current-score">0</span>/100</div>
+      <a href="{% url 'index' %}" class="quit-btn">Keluar</a>
+    </div>
+
+    <div class="canvas-wrapper">
+      <p style="margin-bottom:16px; color:#d1d5db; line-height:1.6;">
+        <strong>Pen Tool:</strong> Klik untuk anchor point, drag untuk kurva Bezier.
+        <strong>Direct Selection:</strong> Geser titik atau handle untuk edit.
+        <strong>Smooth Curve:</strong> Drag untuk kurva halus. Skor minimal 70 untuk lanjut.
+      </p>
+      <canvas id="myCanvas" width="800" height="600"></canvas>
+      <div class="toolbar">
+        <button class="tool-btn active" id="pen-tool">Pen Tool</button>
+        <button class="tool-btn" id="select-tool">Direct Selection</button>
+        <button class="tool-btn" id="curve-tool">Smooth Curve</button>
+        <button class="tool-btn" id="reset-tool">Reset</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+        <div>Points: <span id="node-count">0</span> — Path Length: <span id="path-length">0</span>px</div>
+        <div>
+          <button class="action-btn" id="calculate-score">Hitung Skor</button>
+          <button class="action-btn" id="submit-final">Submit Final</button>
+        </div>
+      </div>
+      <div class="feedback" id="feedback-text">Siap untuk memulai. Gunakan Pen Tool untuk menggambar path dengan kurva yang melengkung.</div>
+    </div>
+
+    <form id="scoreForm" method="post" action="{% url 'gamifikasi_level2' %}" style="display:none;">
+      {% csrf_token %}
+      <input type="hidden" name="score" id="scoreInput">
+    </form>
+  </div>
+
+  <script>
+    paper.setup('myCanvas');
+    const view = paper.view;
+    let userPath = null;
+    let selectedSegment = null;
+    let isDrawing = false;
+    let currentMode = 'pen';
+    let currentScore = 0;
+
+    // Reference path dengan kurva Bezier
+    const refPath = new paper.Path();
+    refPath.strokeColor = new paper.Color(1, 1, 1, 0.2);
+    refPath.strokeWidth = 2;
+    refPath.fillColor = new paper.Color(1, 1, 1, 0.08);
+
+    const refPoints = [
+      { pt: [100, 300] },
+      { pt: [150, 200], out: [40, -60] },
+      { pt: [250, 250], in: [-30, 30], out: [60, 20] },
+      { pt: [350, 300], in: [-60, -20] },
+      { pt: [400, 200], out: [30, -80] },
+      { pt: [500, 150], in: [-50, 30] },
+      { pt: [600, 150], out: [50, 0] },
+      { pt: [700, 150], in: [-50, 0] },
+      { pt: [700, 350] },
+      { pt: [600, 380], in: [0, 30], out: [-60, -30] },
+      { pt: [500, 350], in: [50, 20], out: [-50, -30] },
+      { pt: [400, 350] },
+      { pt: [300, 350], out: [-50, 30] },
+      { pt: [200, 350], in: [50, -30] },
+      { pt: [100, 350] },
+    ];
+
+    refPoints.forEach((seg, idx) => {
+      const pt = new paper.Point(seg.pt);
+      if (idx === 0) refPath.moveTo(pt);
+      else refPath.lineTo(pt);
+      const lastSeg = refPath.lastSegment;
+      if (seg.in) lastSeg.handleIn = new paper.Point(seg.in);
+      if (seg.out) lastSeg.handleOut = new paper.Point(seg.out);
+    });
+    refPath.closed = true;
+
+    function setMode(mode) {
+      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(mode + '-tool').classList.add('active');
+      currentMode = mode;
+      selectedSegment = null;
+      view.update();
+    }
+
+    function updateStats() {
+      const segCount = userPath ? (userPath.segments ? userPath.segments.length : 0) : 0;
+      document.getElementById('node-count').textContent = segCount;
+      const length = userPath ? userPath.length : 0;
+      document.getElementById('path-length').textContent = Math.round(length);
+    }
+
+    function updateFeedback(msg) {
+      document.getElementById('feedback-text').textContent = msg;
+    }
+
+    function resetEditor() {
+      if (userPath) userPath.remove();
+      userPath = null;
+      selectedSegment = null;
+      currentScore = 0;
+      document.getElementById('current-score').textContent = '0';
+      updateStats();
+      updateFeedback('Editor direset. Mulai dengan Pen Tool untuk menggambar path baru.');
+      view.update();
+    }
+
+    function calculateScore() {
+      if (!userPath || !userPath.segments || userPath.segments.length < 4) {
+        updateFeedback('Tambahkan minimal 4 titik untuk penilaian.');
+        return 0;
+      }
+
+      const refLen = refPath.length;
+      const userLen = userPath.length;
+      const lenDiff = Math.abs(refLen - userLen);
+      const lenScore = Math.max(0, 40 - lenDiff * 0.08);
+
+      let distSum = 0;
+      for (let i = 0; i < userPath.segments.length; i++) {
+        const pt = userPath.segments[i].point;
+        const closest = refPath.getNearestPoint(pt);
+        distSum += pt.getDistance(closest);
+      }
+      const avgDist = distSum / userPath.segments.length;
+      const distScore = Math.max(0, 35 - avgDist * 0.6);
+
+      const idealSegs = 14;
+      const segScore = Math.max(0, 25 - Math.abs(userPath.segments.length - idealSegs) * 1.2);
+
+      let score = lenScore + distScore + segScore;
+      score = Math.round(Math.max(0, Math.min(score, 100)));
+      currentScore = score;
+      document.getElementById('current-score').textContent = score;
+      updateFeedback(`Skor: ${score}/100 — Panjang: ${Math.round(userLen)}px vs ref ${Math.round(refLen)}px, jarak rata-rata ${avgDist.toFixed(1)}px.`);
+      return score;
+    }
+
+    document.getElementById('pen-tool').addEventListener('click', () => {
+      setMode('pen');
+      updateFeedback('Pen Tool aktif. Klik untuk anchor, drag untuk bezier handle.');
+    });
+
+    document.getElementById('select-tool').addEventListener('click', () => {
+      setMode('select');
+      updateFeedback('Direct Selection aktif. Seret titik atau handle untuk edit.');
+    });
+
+    document.getElementById('curve-tool').addEventListener('click', () => {
+      setMode('curve');
+      updateFeedback('Smooth Curve aktif. Drag untuk kurva halus otomatis.');
+    });
+
+    document.getElementById('reset-tool').addEventListener('click', resetEditor);
+    document.getElementById('calculate-score').addEventListener('click', calculateScore);
+
+    document.getElementById('submit-final').addEventListener('click', () => {
+      if (currentScore === 0) {
+        updateFeedback('Hitung skor terlebih dahulu sebelum submit.');
+        return;
+      }
+      if (currentScore < 70) {
+        updateFeedback('Skor minimal 70. Perbaiki path Anda.');
+        return;
+      }
+      document.getElementById('scoreInput').value = currentScore;
+      document.getElementById('scoreForm').submit();
+    });
+
+    view.onMouseDown = function(event) {
+      if (currentMode === 'pen') {
+        if (!userPath) {
+          userPath = new paper.Path();
+          userPath.strokeColor = '#f59e0b';
+          userPath.strokeWidth = 4;
+          userPath.fillColor = new paper.Color(245, 158, 11, 0.18);
+        }
+        userPath.add(event.point);
+        updateStats();
+        updateFeedback(`Titik ${userPath.segments.length} ditambah. Drag untuk kurva.`);
+        view.update();
+      } else if (currentMode === 'select') {
+        const hit = userPath ? userPath.hitTest(event.point, { segments: true, stroke: true, curves: true }) : null;
+        if (hit) {
+          selectedSegment = hit.segment || hit.curve;
+          updateFeedback('Segment dipilih. Drag untuk pindahkan.');
+        }
+      } else if (currentMode === 'curve') {
+        if (!userPath) {
+          userPath = new paper.Path();
+          userPath.strokeColor = '#f59e0b';
+          userPath.strokeWidth = 4;
+          userPath.fillColor = new paper.Color(245, 158, 11, 0.18);
+        }
+        isDrawing = true;
+        userPath.add(event.point);
+        updateStats();
+      }
+    };
+
+    view.onMouseDrag = function(event) {
+      if (currentMode === 'pen' && userPath && userPath.lastSegment) {
+        userPath.lastSegment.handleOut = event.delta.multiply(0.4);
+        view.update();
+      } else if (currentMode === 'select' && selectedSegment && selectedSegment.point) {
+        selectedSegment.point = selectedSegment.point.add(event.delta);
+        updateStats();
+        view.update();
+      } else if (currentMode === 'curve' && isDrawing && userPath) {
+        const lastSeg = userPath.lastSegment;
+        userPath.add(lastSeg.point.add(event.delta));
+        lastSeg.handleOut = event.delta.multiply(0.3);
+        updateStats();
+        view.update();
+      }
+    };
+
+    view.onMouseUp = function() {
+      if (currentMode === 'curve' && isDrawing) {
+        isDrawing = false;
+        updateFeedback(`Kurva ditambah. Total ${userPath.segments.length} titik.`);
+      }
+      selectedSegment = null;
+    };
+
+    setMode('pen');
+    updateStats();
+  </script>
+</body>
+</html>
+      backgroundColor: '#2a2a3e',
+      preserveObjectStacking: true,
+      selection: false,
+    });
+
+    const referencePathData = 'M 100 300 Q 150 200 250 250 Q 350 300 400 200 Q 450 100 500 150 Q 550 200 600 150 Q 650 100 700 150 L 700 350 Q 650 400 600 350 Q 550 300 500 350 Q 450 400 400 350 Q 350 300 300 350 Q 250 400 200 350 Q 150 300 100 350 Z';
+    const referencePath = new fabric.Path(referencePathData, {
+      selectable: false,
+      evented: false,
+      fill: 'rgba(255,255,255,0.08)',
+      stroke: 'rgba(255,255,255,0.2)',
+      strokeWidth: 2,
+      opacity: 0.85,
+    });
+    canvas.add(referencePath);
+
+    let userPoints = [];
+    let userPath = null;
+    let isDrawing = false;
+    let currentScore = 0;
+
+    function setMode(mode) {
+      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(mode + '-tool').classList.add('active');
+      window.mode = mode;
+      canvas.discardActiveObject();
+      canvas.requestRenderAll();
+      userPoints.forEach(point => {
+        if (point.circle) {
+          point.circle.selectable = mode === 'select';
+          point.circle.evented = mode === 'select';
+          point.circle.hoverCursor = mode === 'select' ? 'move' : 'default';
+        }
+      });
+    }
+
+    function buildPathFromPoints(points) {
+      if (points.length < 2) return null;
+      const pathData = points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ');
+      return new fabric.Path(pathData, {
+        stroke: '#f59e0b',
+        strokeWidth: 4,
+        fill: 'rgba(245,158,11,0.18)',
+        selectable: false,
+        evented: false,
+        hasControls: false,
+      });
+    }
+
+    function refreshUserPath() {
+      if (userPath) {
+        canvas.remove(userPath);
+        userPath = null;
+      }
+      if (userPoints.length > 1) {
+        userPath = buildPathFromPoints(userPoints);
+        canvas.add(userPath);
+        canvas.sendToBack(userPath);
+        canvas.sendToBack(referencePath);
+      }
+      updateStats();
+    }
+
+    function updateStats() {
+      const nodeCount = userPoints.length;
+      document.getElementById('node-count').textContent = nodeCount;
+      const ref = 12;
+      const eff = nodeCount ? Math.min((ref / nodeCount) * 100, 200) : 0;
+      document.getElementById('efficiency').textContent = Math.round(eff) + '%';
+    }
+
+    function addPoint(x, y) {
+      const circle = new fabric.Circle({
+        left: x,
+        top: y,
+        radius: 8,
+        fill: '#f59e0b',
+        stroke: '#fff',
+        strokeWidth: 2,
+        originX: 'center',
+        originY: 'center',
+        hasControls: false,
+        hasBorders: false,
+        selectable: window.mode === 'select',
+        evented: window.mode === 'select',
+      });
+      const point = { x, y, circle };
+      circle.pointIndex = userPoints.length;
+
+      circle.on('moving', function () {
+        const index = this.pointIndex;
+        if (index === undefined) return;
+        userPoints[index].x = this.left;
+        userPoints[index].y = this.top;
+        refreshUserPath();
+      });
+
+      circle.on('selected', function () {
+        if (window.mode === 'delete') {
+          removePoint(this.pointIndex);
+        }
+      });
+
+      userPoints.push(point);
+      canvas.add(circle);
+      canvas.bringToFront(circle);
+      refreshUserPath();
+    }
+
+    function removePoint(index) {
+      if (index === undefined || index < 0 || index >= userPoints.length) {
+        updateFeedback('Pilih titik yang valid untuk dihapus.');
+        return;
+      }
+      const removed = userPoints.splice(index, 1)[0];
+      if (removed.circle) {
+        canvas.remove(removed.circle);
+      }
+      userPoints.forEach((point, idx) => {
+        if (point.circle) {
+          point.circle.pointIndex = idx;
+        }
+      });
+      refreshUserPath();
+      updateFeedback('Titik dihapus. Lanjutkan dengan Pen Tool atau Direct Selection.');
+    }
+
+    function resetEditor() {
+      userPoints.forEach(point => {
+        if (point.circle) {
+          canvas.remove(point.circle);
+        }
+      });
+      userPoints = [];
+      if (userPath) {
+        canvas.remove(userPath);
+        userPath = null;
+      }
+      currentScore = 0;
+      document.getElementById('current-score').textContent = '0';
+      canvas.clear();
+      canvas.add(referencePath);
+      setMode('pen');
+      updateFeedback('Editor direset. Gunakan Pen Tool untuk mulai menggambar ulang path.');
+      updateStats();
+    }
+
+    function updateFeedback(msg) {
+      document.getElementById('feedback-text').textContent = msg;
+    }
+
+    function sampleReferencePoints() {
+      return [
+        { x: 100, y: 300 }, { x: 150, y: 200 }, { x: 250, y: 250 },
+        { x: 350, y: 300 }, { x: 400, y: 200 }, { x: 450, y: 100 },
+        { x: 500, y: 150 }, { x: 550, y: 200 }, { x: 600, y: 150 },
+        { x: 650, y: 100 }, { x: 700, y: 150 }, { x: 700, y: 350 },
+        { x: 650, y: 400 }, { x: 600, y: 350 }, { x: 550, y: 300 },
+        { x: 500, y: 350 }, { x: 450, y: 400 }, { x: 400, y: 350 },
+        { x: 350, y: 300 }, { x: 300, y: 350 }, { x: 250, y: 400 },
+        { x: 200, y: 350 }, { x: 150, y: 300 }, { x: 100, y: 350 },
+      ];
+    }
+
+    function calculateScore() {
+      if (userPoints.length < 4) {
+        updateFeedback('Tambahkan setidaknya 4 titik agar penilaian lebih bermakna.');
+        return 0;
+      }
+
+      const refPoints = sampleReferencePoints();
+      const avgDist = userPoints.reduce((sum, point) => {
+        const nearest = Math.min(...refPoints.map(ref => Math.hypot(point.x - ref.x, point.y - ref.y)));
+        return sum + nearest;
+      }, 0) / userPoints.length;
+
+      const distanceScore = Math.max(0, 40 - avgDist * 0.4);
+      const nodeScore = Math.max(0, 40 - Math.abs(userPoints.length - 14) * 1.8);
+      const continuityScore = Math.max(0, 20 - Math.abs(userPoints.length - 14));
+      let score = distanceScore + nodeScore + continuityScore;
+      score = Math.round(Math.max(0, Math.min(score, 100)));
+      currentScore = score;
+      document.getElementById('current-score').textContent = score;
+      updateFeedback(`Skor sementara: ${score}/100 — Jarak rata-rata ${avgDist.toFixed(1)}px, titik ${userPoints.length}.`);
+      return score;
+    }
+
+    document.getElementById('pen-tool').addEventListener('click', () => {
+      setMode('pen');
+      updateFeedback('Pen Tool aktif. Klik atau drag untuk menambahkan titik baru.');
+    });
+
+    document.getElementById('select-tool').addEventListener('click', () => {
+      setMode('select');
+      updateFeedback('Direct Selection aktif. Seret titik untuk memperbaiki siluet.');
+    });
+
+    document.getElementById('delete-tool').addEventListener('click', () => {
+      setMode('delete');
+      updateFeedback('Hapus Node aktif. Klik titik merah untuk menghapusnya.');
+    });
+
+    document.getElementById('reset-tool').addEventListener('click', resetEditor);
+
+    canvas.on('mouse:down', function (event) {
+      const pointer = canvas.getPointer(event.e);
+      if (window.mode === 'pen') {
+        isDrawing = true;
+        addPoint(pointer.x, pointer.y);
+      }
+    });
+
+    canvas.on('mouse:move', function (event) {
+      if (!isDrawing || window.mode !== 'pen') return;
+      const pointer = canvas.getPointer(event.e);
+      const lastPoint = userPoints[userPoints.length - 1];
+      if (!lastPoint) return;
+      const dist = Math.hypot(pointer.x - lastPoint.x, pointer.y - lastPoint.y);
+      if (dist > 16) {
+        addPoint(pointer.x, pointer.y);
+      }
+    });
+
+    canvas.on('mouse:up', function () {
+      if (isDrawing && window.mode === 'pen') {
+        isDrawing = false;
+        updateFeedback('Path selesai. Gunakan Kalkulasi Skor untuk melihat hasilnya.');
+      }
+    });
+
+    document.getElementById('calculate-score').addEventListener('click', calculateScore);
+
+    document.getElementById('submit-final').addEventListener('click', () => {
+      if (currentScore === 0) {
+        updateFeedback('Hitung skor terlebih dahulu sebelum submit.');
+        return;
+      }
+      if (currentScore < 70) {
+        updateFeedback('Skor harus minimal 70 agar bisa lanjut. Perbaiki tracing Anda dan hitung ulang.');
+        return;
+      }
+      document.getElementById('scoreInput').value = currentScore;
+      document.getElementById('scoreForm').submit();
+    });
+
+    setMode('pen');
+    updateStats();
+  </script>
+</body>
+</html>

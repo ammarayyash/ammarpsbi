@@ -1,0 +1,375 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Level 5 – Industry Ready</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a1a;--card:rgba(255,255,255,.05);--border:rgba(255,255,255,.1);--accent:#6366f1;--green:#22c55e;--red:#ef4444}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:#f0f0f5;min-height:100vh;overflow-x:hidden;user-select:none;
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.12) 0%, transparent 35%),
+        radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.12) 0%, transparent 35%),
+        url("data:image/svg+xml,%3Csvg width='100' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10 Q 25 0, 50 10 T 100 10' fill='none' stroke='%236366f1' stroke-width='1.5' stroke-opacity='0.2'/%3E%3C/svg%3E");
+    background-size: 100% 100%, 100% 100%, 100px 20px;
+    background-position: 0 0, 0 0, 0 0;
+    background-attachment: fixed;
+}
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+.bg span{position:absolute;border-radius:50%;filter:blur(90px);opacity:.2;animation:fl 10s ease-in-out infinite alternate}
+.bg span:nth-child(1){width:500px;height:500px;background:#4338ca;top:-10%;left:-10%}
+.bg span:nth-child(2){width:350px;height:350px;background:#3730a3;bottom:-10%;right:-5%;animation-delay:4s}
+.bg span:nth-child(3){width:280px;height:280px;background:#312e81;top:40%;left:55%;animation-delay:7s}
+@keyframes fl{to{transform:translate(30px,-20px) scale(1.1)}}
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:24px 16px;min-height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px}
+.level-badge{background:linear-gradient(135deg,#4f46e5,#6366f1);padding:6px 18px;border-radius:20px;font-weight:700;font-size:.85rem;letter-spacing:1px}
+.score-disp{font-size:1.1rem;font-weight:700;color:#818cf8}
+.quit-btn{background:var(--card);border:1px solid var(--border);color:#fff;padding:8px 18px;border-radius:20px;font-family:inherit;font-size:.85rem;cursor:pointer;text-decoration:none;transition:.2s}
+.quit-btn:hover{background:rgba(239,68,68,.3)}
+.prog-wrap{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.prog-track{flex:1;height:8px;background:rgba(255,255,255,.1);border-radius:20px;overflow:hidden}
+.prog-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#4f46e5,#818cf8);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.prog-text{font-size:.85rem;font-weight:600;white-space:nowrap}
+
+.q-area{text-align:center;margin-bottom:24px}
+.q-num{font-size:.8rem;font-weight:700;color:#818cf8;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+.q-text{font-size:1.2rem;font-weight:700;line-height:1.5}
+.q-text strong{color:#fbbf24}
+
+/* Part 1: Sortir File */
+.file-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.file-card{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:12px}
+.file-card:hover{transform:translateY(-2px);border-color:#818cf8;background:rgba(99,102,241,.1)}
+.file-icon{font-size:2rem;color:#818cf8}
+.file-name{font-family:monospace;font-size:.9rem;font-weight:700}
+.file-card.correct{border-color:var(--green)!important;background:rgba(34,197,94,.1)}
+.file-card.wrong{border-color:var(--red)!important;animation:shake .4s}
+
+/* Part 2 & 3: Drag Drop */
+.dnd-container{display:flex;flex-direction:column;gap:24px}
+.dnd-sources{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;padding:16px;background:var(--card);border-radius:16px;border:1px dashed var(--border);min-height:80px}
+.dnd-targets{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.dnd-target-mockup{grid-template-columns:repeat(3,1fr)}
+.target-box{background:rgba(0,0,0,.2);border:2px dashed var(--border);border-radius:16px;padding:16px;min-height:140px;display:flex;flex-direction:column;align-items:center;gap:12px;transition:.2s}
+.target-box.drag-over{background:rgba(99,102,241,.15);border-color:#818cf8}
+.target-title{font-size:.85rem;font-weight:700;opacity:.7;text-align:center;display:flex;align-items:center;gap:6px}
+.target-title i{color:#818cf8}
+.draggable-item{background:linear-gradient(135deg,#3730a3,#4f46e5);border:1px solid #6366f1;border-radius:8px;padding:8px 14px;font-family:monospace;font-size:.85rem;font-weight:700;cursor:grab;box-shadow:0 4px 12px rgba(0,0,0,.2);display:flex;align-items:center;gap:8px}
+.draggable-item:active{cursor:grabbing;transform:scale(.95)}
+.draggable-img{width:80px;height:80px;background:white;border-radius:8px;cursor:grab;box-shadow:0 4px 12px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;padding:4px}
+.draggable-img svg{width:100%;height:100%}
+
+.submit-btn{background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;color:white;padding:12px 32px;border-radius:24px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer;margin:0 auto;display:block;transition:.2s}
+.submit-btn:hover{transform:scale(1.04);box-shadow:0 6px 24px rgba(99,102,241,.4)}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* Feedback */
+.feedback-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(10,10,30,.97);border:1px solid var(--border);border-radius:12px;padding:14px 28px;font-size:.95rem;font-weight:600;transition:.4s;opacity:0;z-index:100}
+.feedback-toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.feedback-toast.green{border-color:var(--green);color:var(--green)}
+.feedback-toast.red{border-color:var(--red);color:var(--red)}
+
+/* Result overlay */
+.result-overlay{position:fixed;inset:0;background:rgba(5,10,20,.92);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeUp .4s}
+.result-box{background:linear-gradient(135deg,#1e1b4b,#312e81);border:1px solid rgba(99,102,241,.4);border-radius:20px;padding:36px;max-width:480px;width:90%;text-align:center}
+.result-score-big{font-size:3.5rem;font-weight:900;background:linear-gradient(135deg,#818cf8,#c7d2fe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:12px 0}
+.result-action-btn{background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;color:white;padding:13px 36px;border-radius:24px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:16px;transition:.2s}
+.result-action-btn:hover{transform:scale(1.04);box-shadow:0 6px 24px rgba(99,102,241,.4)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.hidden{display:none}
+@media(max-width:640px){
+  .file-grid{grid-template-columns:1fr}
+  .dnd-targets{grid-template-columns:1fr 1fr}
+  .dnd-target-mockup{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="bg"><span></span><span></span><span></span></div>
+<div class="wrap">
+  <div class="topbar">
+    <div class="level-badge">💼 LEVEL 5</div>
+    <div class="score-disp">Skor: <span id="scoreDisp">0</span>/100</div>
+    <a href="{% url 'misi' %}" class="quit-btn"><i class="fa fa-xmark"></i> Keluar</a>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    <div class="prog-text" id="progText">Bagian 1/3</div>
+  </div>
+  <div class="q-area">
+    <div class="q-num" id="qNum">BAGIAN 1 – SORTIR FILE (Soal 1)</div>
+    <div class="q-text" id="qText"></div>
+  </div>
+
+  <div id="part1" class="file-grid"></div>
+  
+  <div id="part2" class="dnd-container hidden">
+    <div class="dnd-sources" id="source2"></div>
+    <div class="dnd-targets" id="targets2">
+      <div class="target-box" data-target="source"><div class="target-title"><i class="fa fa-folder-open"></i> Source</div></div>
+      <div class="target-box" data-target="export"><div class="target-title"><i class="fa fa-folder-open"></i> Export</div></div>
+      <div class="target-box" data-target="mockup"><div class="target-title"><i class="fa fa-folder-open"></i> Mockup</div></div>
+      <div class="target-box" data-target="manual"><div class="target-title"><i class="fa fa-folder-open"></i> Manual</div></div>
+    </div>
+    <button class="submit-btn" id="btnSubmit2" onclick="checkPart2()">Cek Susunan Folder</button>
+  </div>
+
+  <div id="part3" class="dnd-container hidden">
+    <div class="dnd-sources" id="source3"></div>
+    <div class="dnd-targets dnd-target-mockup" id="targets3">
+      <div class="target-box" data-target="billboard">
+        <div class="target-title"><i class="fa fa-tv"></i> Billboard (Landscape)</div>
+        <svg viewBox="0 0 100 60" style="width:100%;height:80px;background:#334155;border-radius:4px"><rect width="100" height="60" fill="none" stroke="#64748b" stroke-width="2"/></svg>
+      </div>
+      <div class="target-box" data-target="kaos">
+        <div class="target-title"><i class="fa fa-tshirt"></i> T-Shirt (Center)</div>
+        <svg viewBox="0 0 100 100" style="width:100%;height:80px;fill:#334155"><path d="M20,20 Q50,40 80,20 L100,40 L80,100 L20,100 L0,40 Z"/></svg>
+      </div>
+      <div class="target-box" data-target="icon">
+        <div class="target-title"><i class="fa fa-mobile-screen"></i> App Icon (Square)</div>
+        <svg viewBox="0 0 100 100" style="width:100%;height:80px"><rect x="25" y="25" width="50" height="50" rx="10" fill="#334155"/></svg>
+      </div>
+    </div>
+    <button class="submit-btn" id="btnSubmit3" onclick="checkPart3()">Cek Pemasangan Mockup</button>
+  </div>
+</div>
+<div class="feedback-toast" id="toast"></div>
+
+<form id="scoreForm" method="POST" action="{% url 'gamifikasi_level5' %}">
+  {% csrf_token %}
+  <input type="hidden" name="score" id="scoreInput">
+</form>
+
+<script>
+(function(){
+let totalScore=0;
+
+// Part 1: Click
+const P1_Q=[
+  {q:"Klik file yang <strong>TIDAK BOLEH</strong> dikirim ke percetakan untuk spanduk (karena bisa pecah)!",
+   files:[{name:"spanduk.pdf",icon:"fa-file-pdf",ok:1},{name:"spanduk.ai",icon:"fa-file-pen",ok:1},{name:"spanduk.jpg",icon:"fa-file-image",ok:0}],
+   hint:"JPG adalah bitmap, akan pecah jika dicetak besar seperti spanduk."},
+  {q:"Klik file yang <strong>PALING COCOK</strong> dikirim ke developer web untuk ikon menu!",
+   files:[{name:"icon.svg",icon:"fa-file-code",ok:1},{name:"icon.psd",icon:"fa-file-image",ok:0},{name:"icon.cdr",icon:"fa-file-pen",ok:0}],
+   hint:"SVG adalah format vektor untuk web — ringan dan tajam di layar apapun."},
+  {q:"Klik file yang <strong>PENTING</strong> disertakan agar klien tahu kode warna logonya!",
+   files:[{name:"logo.png",icon:"fa-file-image",ok:0},{name:"panduan.pdf",icon:"fa-file-pdf",ok:1},{name:"mockup.jpg",icon:"fa-file-image",ok:0}],
+   hint:"Panduan/manual berisi aturan warna dan cara penggunaan logo."}
+];
+let p1Idx=0;
+
+function renderPart1(){
+  document.getElementById('qNum').textContent='BAGIAN 1 – SORTIR FILE (Soal '+(p1Idx+1)+'/3)';
+  document.getElementById('qText').innerHTML=P1_Q[p1Idx].q;
+  document.getElementById('progFill').style.width=((p1Idx/5)*100)+'%';
+  const grid=document.getElementById('part1');
+  grid.innerHTML='';
+  P1_Q[p1Idx].files.forEach((f,i)=>{
+    const card=document.createElement('div');
+    card.className='file-card';
+    card.innerHTML=`<i class="fa ${f.icon} file-icon"></i><div class="file-name">${f.name}</div>`;
+    card.onclick=()=>answerPart1(i,card,f);
+    grid.appendChild(card);
+  });
+}
+
+function answerPart1(idx,card,file){
+  const cards=document.querySelectorAll('.file-card');
+  cards.forEach(c=>c.style.pointerEvents='none');
+  if(file.ok===1){
+    card.classList.add('correct');
+    totalScore+=10;
+    document.getElementById('scoreDisp').textContent=totalScore;
+    showToast('✅ Benar! '+P1_Q[p1Idx].hint,'green');
+    setTimeout(()=>{
+      p1Idx++;
+      if(p1Idx<3)renderPart1();
+      else startPart2();
+    },1500);
+  } else {
+    card.classList.add('wrong');
+    showToast('❌ Salah! Coba baca lagi perintahnya.','red');
+    setTimeout(()=>{
+      card.classList.remove('wrong');
+      cards.forEach(c=>c.style.pointerEvents='');
+    },1000);
+  }
+}
+
+// DnD logic
+let draggedEl=null;
+function initDnD(itemSelector, targetSelector){
+  const items=document.querySelectorAll(itemSelector);
+  const targets=document.querySelectorAll(targetSelector);
+  items.forEach(it=>{
+    it.addEventListener('dragstart',e=>{
+      draggedEl=it;
+      setTimeout(()=>it.style.opacity='0.4',0);
+    });
+    it.addEventListener('dragend',e=>{
+      draggedEl=null;
+      it.style.opacity='1';
+    });
+  });
+  targets.forEach(tg=>{
+    tg.addEventListener('dragover',e=>{e.preventDefault();tg.classList.add('drag-over')});
+    tg.addEventListener('dragleave',e=>tg.classList.remove('drag-over'));
+    tg.addEventListener('drop',e=>{
+      e.preventDefault();
+      tg.classList.remove('drag-over');
+      if(draggedEl) tg.appendChild(draggedEl);
+    });
+  });
+}
+
+function startPart2(){
+  document.getElementById('part1').classList.add('hidden');
+  document.getElementById('qNum').textContent='BAGIAN 2 – DRAG & DROP FOLDER';
+  document.getElementById('qText').innerHTML='Rapikan file proyek! Tarik (drag) setiap file ke <strong>FOLDER YANG TEPAT</strong>.';
+  document.getElementById('progFill').style.width='60%';
+  document.getElementById('progText').textContent='Bagian 2/3';
+  document.getElementById('part2').classList.remove('hidden');
+
+  const files=[
+    {id:'f1',name:'logo_final.svg',target:'export',icon:'fa-file-code'},
+    {id:'f2',name:'sketsa_awal.ai',target:'source',icon:'fa-file-pen'},
+    {id:'f3',name:'mockup_kaos.jpg',target:'mockup',icon:'fa-file-image'},
+    {id:'f4',name:'brand_guideline.pdf',target:'manual',icon:'fa-file-pdf'}
+  ].sort(()=>Math.random()-.5);
+
+  const src=document.getElementById('source2');
+  src.innerHTML='';
+  files.forEach(f=>{
+    const el=document.createElement('div');
+    el.className='draggable-item';
+    el.draggable=true;
+    el.dataset.id=f.id;
+    el.dataset.target=f.target;
+    el.innerHTML=`<i class="fa ${f.icon}"></i> ${f.name}`;
+    src.appendChild(el);
+  });
+  initDnD('#part2 .draggable-item', '#part2 .target-box, #part2 .dnd-sources');
+}
+
+window.checkPart2=function(){
+  const items=document.querySelectorAll('#part2 .draggable-item');
+  let correct=0;
+  items.forEach(it=>{
+    const p=it.parentElement;
+    if(p.classList.contains('target-box') && p.dataset.target===it.dataset.target){
+      correct++;
+      it.style.borderColor='var(--green)';
+      it.style.background='rgba(34,197,94,0.2)';
+    } else {
+      it.style.borderColor='var(--red)';
+      it.style.background='rgba(239,68,68,0.2)';
+    }
+  });
+  totalScore+=(correct*5); // max 20
+  document.getElementById('scoreDisp').textContent=totalScore;
+  if(correct===4){
+    showToast('✅ Semua file masuk folder yang benar!','green');
+    document.getElementById('btnSubmit2').disabled=true;
+    setTimeout(startPart3,1500);
+  } else {
+    showToast('❌ Masih ada file yang salah folder. Perbaiki posisinya!','red');
+  }
+};
+
+function startPart3(){
+  document.getElementById('part2').classList.add('hidden');
+  document.getElementById('qNum').textContent='BAGIAN 3 – PASANG MOCKUP';
+  document.getElementById('qText').innerHTML='Tarik (drag) setiap <strong>DESAIN</strong> ke <strong>MOCKUP</strong> yang ukurannya paling sesuai.';
+  document.getElementById('progFill').style.width='80%';
+  document.getElementById('progText').textContent='Bagian 3/3';
+  document.getElementById('part3').classList.remove('hidden');
+
+  const SVGS={
+    billboard:`<svg viewBox="0 0 100 50"><rect width="100" height="50" fill="#2563eb"/><text x="50" y="30" text-anchor="middle" fill="white" font-size="14" font-weight="bold" font-family="sans-serif">PROMO 50%</text></svg>`,
+    kaos:`<svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="#f59e0b"/><polygon points="25,10 40,35 10,35" fill="white"/></svg>`,
+    icon:`<svg viewBox="0 0 50 50"><rect width="50" height="50" rx="10" fill="#10b981"/><circle cx="25" cy="25" r="12" fill="white"/></svg>`
+  };
+
+  const designs=[
+    {target:'billboard',svg:SVGS.billboard},
+    {target:'kaos',svg:SVGS.kaos},
+    {target:'icon',svg:SVGS.icon}
+  ].sort(()=>Math.random()-.5);
+
+  const src=document.getElementById('source3');
+  src.innerHTML='';
+  designs.forEach(d=>{
+    const el=document.createElement('div');
+    el.className='draggable-img';
+    el.draggable=true;
+    el.dataset.target=d.target;
+    el.innerHTML=d.svg;
+    src.appendChild(el);
+  });
+  initDnD('#part3 .draggable-img', '#part3 .target-box, #part3 .dnd-sources');
+}
+
+window.checkPart3=function(){
+  const items=document.querySelectorAll('#part3 .draggable-img');
+  let correct=0;
+  items.forEach(it=>{
+    const p=it.parentElement;
+    if(p.classList.contains('target-box') && p.dataset.target===it.dataset.target){
+      correct++;
+      it.style.boxShadow='0 0 0 3px var(--green)';
+    } else {
+      it.style.boxShadow='0 0 0 3px var(--red)';
+    }
+  });
+  totalScore+=(correct*10); // max 30
+  document.getElementById('scoreDisp').textContent=Math.min(totalScore,100);
+  if(correct===3){
+    if(totalScore===80) totalScore+=20; // Perfect bonus
+    document.getElementById('scoreDisp').textContent=Math.min(totalScore,100);
+    showToast('✅ Semua desain cocok! Mockup siap dikirim.','green');
+    document.getElementById('btnSubmit3').disabled=true;
+    setTimeout(showResult,1500);
+  } else {
+    showToast('❌ Ada desain yang proporsinya tidak pas dengan mockup.','red');
+  }
+};
+
+function showResult(){
+  const finalScore=Math.min(totalScore,100);
+  const pass=finalScore>=60;
+  document.getElementById('part3').classList.add('hidden');
+  document.getElementById('qArea').classList.add('hidden');
+  document.getElementById('progFill').style.width='100%';
+  document.getElementById('progText').textContent='Selesai!';
+
+  const ov=document.createElement('div');
+  ov.className='result-overlay';
+  ov.innerHTML=`
+    <div class="result-box">
+      <div style="font-size:4rem;margin-bottom:8px">${pass?'🎓':'💼'}</div>
+      <div class="result-score-big">${finalScore}/100</div>
+      <p style="opacity:.7;font-size:.95rem;margin:12px 0">${pass?'Luar biasa! Kamu sudah siap terjun ke industri desain!':'Hampir siap! Perbaiki manajemen file-mu dan coba lagi!'}</p>
+      <button class="result-action-btn" onclick="document.getElementById('scoreInput').value=${finalScore};document.getElementById('scoreForm').submit()">
+        ${pass?'<i class="fa fa-flag-checkered"></i> Selesaikan Misi Terakhir':'<i class="fa fa-redo"></i> Coba Lagi'}
+      </button>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+let toastTimer;
+function showToast(msg,type){
+  const t=document.getElementById('toast');
+  t.innerHTML=msg;t.className='feedback-toast '+type;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+renderPart1();
+})();
+</script>
+</body>
+</html>

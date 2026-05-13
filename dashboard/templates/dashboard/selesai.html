@@ -1,0 +1,194 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Misi Selesai! - {{ mission.title }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0d0620;
+            color: white;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Animated background */
+        .bg-shapes { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .bg-shapes span { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .4; animation: float 8s ease-in-out infinite alternate; }
+        .bg-shapes span:nth-child(1){ width:400px;height:400px;background:#2ecc71;top:-10%;left:-5%; }
+        .bg-shapes span:nth-child(2){ width:350px;height:350px;background:#f1c40f;bottom:-10%;right:-8%;animation-delay:2s; }
+        .bg-shapes span:nth-child(3){ width:280px;height:280px;background:#6c5ce7;top:40%;left:60%;animation-delay:4s; }
+        @keyframes float { to { transform: translate(40px,-30px) scale(1.08); } }
+
+        .result-card {
+            position: relative; z-index: 1;
+            text-align: center;
+            max-width: 520px; width: 90%;
+            padding: 56px 40px 48px;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 32px;
+            backdrop-filter: blur(20px);
+            animation: cardPop .6s cubic-bezier(.34,1.56,.64,1);
+        }
+        @keyframes cardPop {
+            from { transform: scale(.6) translateY(40px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .trophy-wrap {
+            width: 120px; height: 120px; margin: 0 auto 24px;
+            background: linear-gradient(135deg, rgba(241,196,15,.2), rgba(46,204,113,.2));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            animation: trophyBounce 2s ease-in-out infinite;
+        }
+        .trophy-wrap i {
+            font-size: 56px;
+            background: linear-gradient(135deg, #f1c40f, #e67e22);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 4px 20px rgba(241,196,15,.4));
+        }
+        @keyframes trophyBounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .result-title {
+            font-size: 2.4rem; font-weight: 900;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, #ffeaa7, #f1c40f, #fdcb6e);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .result-subtitle {
+            font-size: 1.1rem; opacity: .7; margin-bottom: 8px;
+        }
+        .result-mission {
+            font-size: 1.3rem; font-weight: 700; margin-bottom: 32px;
+            color: #a29bfe;
+        }
+
+        /* XP badge */
+        .xp-reward-badge {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 16px 36px;
+            background: linear-gradient(135deg, rgba(241,196,15,.15), rgba(241,196,15,.05));
+            border: 2px solid rgba(241,196,15,.3);
+            border-radius: 50px;
+            font-size: 1.8rem; font-weight: 800;
+            color: #f1c40f;
+            margin-bottom: 32px;
+            animation: xpPulse 2s ease-in-out infinite;
+        }
+        .xp-reward-badge i { font-size: 1.4rem; }
+        @keyframes xpPulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(241,196,15,.3); }
+            50% { box-shadow: 0 0 0 12px rgba(241,196,15,0); }
+        }
+
+        .result-message {
+            font-size: 1rem; opacity: .6; line-height: 1.6;
+            margin-bottom: 36px; max-width: 380px; margin-left: auto; margin-right: auto;
+        }
+
+        .result-actions { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 16px 40px; border-radius: 50px;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white; font-family: inherit; font-size: 1.05rem; font-weight: 700;
+            border: none; cursor: pointer; text-decoration: none;
+            transition: transform .2s, box-shadow .2s;
+        }
+        .btn-primary:hover { transform: scale(1.04); box-shadow: 0 8px 30px rgba(108,92,231,.4); }
+        .btn-secondary {
+            color: rgba(255,255,255,.5); font-size: .9rem; text-decoration: none;
+            transition: color .2s;
+        }
+        .btn-secondary:hover { color: white; }
+
+        /* Confetti */
+        .confetti-piece {
+            position: fixed; z-index: 200; pointer-events: none;
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        @media (max-width: 500px) {
+            .result-card { padding: 40px 24px 36px; }
+            .result-title { font-size: 1.8rem; }
+            .xp-reward-badge { font-size: 1.4rem; padding: 12px 28px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-shapes"><span></span><span></span><span></span></div>
+
+    <div class="result-card">
+        <div class="trophy-wrap">
+            <i class="fa-solid fa-trophy"></i>
+        </div>
+
+        <h1 class="result-title">Luar Biasa!</h1>
+        <p class="result-subtitle">Kamu telah menyelesaikan misi</p>
+        <p class="result-mission">{{ mission.title }}</p>
+
+        <div class="xp-reward-badge">
+            <i class="fa-solid fa-bolt"></i>
+            +{{ mission.xp_reward }} XP
+        </div>
+
+        <p class="result-message">
+            Pengetahuanmu tentang gambar vektor semakin bertambah! Terus selesaikan misi untuk naik level dan kumpulkan badge.
+        </p>
+
+        <div class="result-actions">
+            {% if next_mission %}
+            <a href="{{ next_mission_url }}" class="btn-primary">
+                <i class="fa-solid fa-bullseye"></i> Buka Materi {{ next_mission.title }}
+            </a>
+            {% else %}
+            <a href="{% url 'misi' %}" class="btn-primary">
+                <i class="fa-solid fa-bullseye"></i> Lanjut Misi Berikutnya
+            </a>
+            {% endif %}
+            <a href="{% url 'index' %}" class="btn-secondary">Kembali ke Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        // Confetti burst on load
+        const colors = ['#6c5ce7','#a29bfe','#ffeaa7','#55efc4','#fd79a8','#74b9ff','#f1c40f','#2ecc71'];
+        function spawnConfetti() {
+            for (let i = 0; i < 60; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = (Math.random() * 100) + 'vw';
+                piece.style.top = '-10px';
+                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                const size = 6 + Math.random() * 10;
+                piece.style.width = size + 'px';
+                piece.style.height = size + 'px';
+                piece.style.borderRadius = Math.random() > .5 ? '50%' : '2px';
+                piece.style.animation = 'confettiFall ' + (2 + Math.random() * 2.5) + 's linear forwards';
+                piece.style.animationDelay = (Math.random() * .8) + 's';
+                document.body.appendChild(piece);
+                setTimeout(() => piece.remove(), 5500);
+            }
+        }
+        // Fire confetti in waves
+        spawnConfetti();
+        setTimeout(spawnConfetti, 800);
+        setTimeout(spawnConfetti, 1600);
+    </script>
+</body>
+</html>

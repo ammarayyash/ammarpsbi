@@ -1,0 +1,517 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Materi - {{ mission.title }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-card: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.08);
+            --text-primary: #f0f0f5;
+            --text-secondary: rgba(255,255,255,0.55);
+            --accent: #818cf8;
+            --accent-glow: rgba(129,140,248,0.25);
+            --accent-green: #34d399;
+            --accent-yellow: #fbbf24;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* ===== Reading Progress Bar ===== */
+        .reading-progress {
+            position: fixed; top: 0; left: 0; width: 0%; height: 4px;
+            background: linear-gradient(90deg, #6c5ce7, #a29bfe, #818cf8);
+            z-index: 1000;
+            transition: width .15s linear;
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        /* ===== Floating Background Shapes ===== */
+        .bg-decor { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .bg-decor span {
+            position: absolute; border-radius: 50%;
+            filter: blur(100px); opacity: .2;
+            animation: bgFloat 12s ease-in-out infinite alternate;
+        }
+        .bg-decor span:nth-child(1) { width: 500px; height: 500px; background: #6c5ce7; top: -15%; left: -10%; }
+        .bg-decor span:nth-child(2) { width: 400px; height: 400px; background: #00cec9; bottom: 10%; right: -8%; animation-delay: 3s; }
+        .bg-decor span:nth-child(3) { width: 300px; height: 300px; background: #e17055; top: 50%; left: 40%; animation-delay: 6s; }
+        @keyframes bgFloat { to { transform: translate(50px, -40px) scale(1.1); } }
+
+        /* ===== Top Navigation ===== */
+        .top-nav {
+            position: fixed; top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 16px 32px;
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(10,10,26,0.7);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            transition: transform .3s;
+        }
+        .top-nav.hidden { transform: translateY(-100%); }
+        .nav-back {
+            display: flex; align-items: center; gap: 10px;
+            color: var(--text-secondary); text-decoration: none;
+            font-size: .9rem; font-weight: 500;
+            transition: color .2s;
+        }
+        .nav-back:hover { color: white; }
+        .nav-back i {
+            width: 32px; height: 32px; border-radius: 10px;
+            background: rgba(255,255,255,.06); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .8rem;
+        }
+        .nav-info { display: flex; align-items: center; gap: 16px; }
+        .nav-xp {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 14px; border-radius: 20px;
+            background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.2);
+            color: var(--accent-yellow); font-weight: 600; font-size: .85rem;
+        }
+        .nav-quiz-btn {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 20px; border-radius: 30px;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white; text-decoration: none;
+            font-weight: 600; font-size: .85rem;
+            transition: transform .2s, box-shadow .2s;
+        }
+        .nav-quiz-btn:hover { transform: scale(1.05); box-shadow: 0 4px 20px var(--accent-glow); }
+
+        /* ===== Hero Section ===== */
+        .hero {
+            position: relative; z-index: 1;
+            min-height: 70vh;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center;
+            padding: 120px 24px 80px;
+        }
+        .hero-inner { max-width: 700px; }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 8px 20px; border-radius: 30px;
+            background: rgba(129,140,248,.1); border: 1px solid rgba(129,140,248,.2);
+            color: var(--accent); font-size: .85rem; font-weight: 600;
+            margin-bottom: 24px;
+            animation: none;
+        }
+        .hero-badge i { font-size: .75rem; }
+        .hero-title {
+            font-size: clamp(2.2rem, 5vw, 3.5rem);
+            font-weight: 900; line-height: 1.15;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, #a29bfe 50%, #818cf8 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: none;
+        }
+        .hero-desc {
+            font-size: 1.15rem; color: var(--text-secondary);
+            max-width: 540px; margin: 0 auto 32px;
+            animation: none;
+        }
+        .hero-meta {
+            display: flex; align-items: center; justify-content: center; gap: 28px;
+            font-size: .9rem; color: var(--text-secondary);
+            animation: fadeUp .9s ease-out;
+        }
+        .hero-meta span { display: flex; align-items: center; gap: 6px; }
+        .hero-meta i { color: var(--accent); }
+        .scroll-hint {
+            position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            color: var(--text-secondary); font-size: .8rem;
+            animation: scrollBounce 2s ease-in-out infinite;
+        }
+        .scroll-hint i { font-size: 1.2rem; }
+        @keyframes scrollBounce {
+            0%,100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(8px); }
+        }
+
+        /* ===== Content Wrapper ===== */
+        .content-wrap {
+            position: relative; z-index: 1;
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 0 24px 100px;
+        }
+
+        /* ===== Scroll-animated sections ===== */
+        .reveal {
+            opacity: 0; transform: translateY(40px);
+            transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1);
+        }
+        .reveal.visible {
+            opacity: 1; transform: translateY(0);
+        }
+
+        /* ===== Content Styling ===== */
+        .materi-content h2 {
+            font-size: 1.9rem; font-weight: 800;
+            margin: 64px 0 20px;
+            padding-left: 18px;
+            border-left: 4px solid var(--accent);
+            background: linear-gradient(90deg, rgba(129,140,248,.08), transparent);
+            padding-top: 8px; padding-bottom: 8px;
+            border-radius: 0 8px 8px 0;
+        }
+        .materi-content h3 {
+            font-size: 1.35rem; font-weight: 700;
+            margin: 40px 0 16px;
+            color: #c4b5fd;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .materi-content h3::before {
+            content: '';
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
+        }
+        .materi-content p {
+            font-size: 1.05rem; color: rgba(255,255,255,.8);
+            margin-bottom: 16px;
+        }
+        .materi-content strong {
+            color: #a5b4fc; font-weight: 600;
+        }
+        .materi-content ul {
+            list-style: none; padding: 0; margin: 0 0 20px;
+        }
+        .materi-content ul li {
+            position: relative;
+            padding: 14px 20px 14px 48px;
+            margin-bottom: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            font-size: 1rem;
+            transition: transform .2s, border-color .2s;
+        }
+        .materi-content ul li:hover {
+            transform: translateX(6px);
+            border-color: rgba(129,140,248,.3);
+        }
+        .materi-content ul li::before {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+            color: var(--accent-green);
+            font-size: .8rem;
+        }
+
+        /* ===== Tables ===== */
+        .materi-content table {
+            width: 100%; border-collapse: separate; border-spacing: 0;
+            margin: 20px 0 28px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+        }
+        .materi-content table th {
+            padding: 16px 18px;
+            text-align: left;
+            font-weight: 700; font-size: .9rem;
+            color: var(--accent);
+            background: rgba(129,140,248,.08);
+            border-bottom: 1px solid var(--border);
+        }
+        .materi-content table td {
+            padding: 14px 18px;
+            font-size: .95rem;
+            border-bottom: 1px solid rgba(255,255,255,.03);
+        }
+        .materi-content table tr:last-child td { border-bottom: none; }
+        .materi-content table tr:hover td {
+            background: rgba(129,140,248,.04);
+        }
+
+        /* ===== CTA Section ===== */
+        .cta-section {
+            text-align: center;
+            padding: 80px 0 40px;
+        }
+        .cta-card {
+            display: inline-block;
+            padding: 48px 56px;
+            background: linear-gradient(135deg, rgba(108,92,231,.12), rgba(162,155,254,.06));
+            border: 1px solid rgba(129,140,248,.2);
+            border-radius: 28px;
+            backdrop-filter: blur(10px);
+        }
+        .cta-card h2 {
+            font-size: 1.8rem; font-weight: 800;
+            margin-bottom: 12px;
+            border: none !important; padding: 0 !important;
+            background: none !important;
+        }
+        .cta-card p {
+            color: var(--text-secondary); margin-bottom: 28px;
+            font-size: 1.05rem;
+        }
+        .cta-btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 18px 48px; border-radius: 50px;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white; text-decoration: none;
+            font-family: inherit; font-size: 1.1rem; font-weight: 700;
+            border: none; cursor: pointer;
+            transition: transform .2s, box-shadow .2s;
+            box-shadow: 0 4px 24px var(--accent-glow);
+        }
+        .cta-btn:hover {
+            transform: scale(1.06);
+            box-shadow: 0 8px 40px rgba(108,92,231,.5);
+        }
+        .cta-btn i { transition: transform .2s; }
+        .cta-btn:hover i { transform: translateX(4px); }
+
+        /* ===== Floating Particles ===== */
+        .particle {
+            position: fixed; z-index: 0; pointer-events: none;
+            width: 3px; height: 3px; border-radius: 50%;
+            background: var(--accent);
+            opacity: .3;
+            animation: particleRise linear infinite;
+        }
+        @keyframes particleRise {
+            from { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: .4; }
+            90% { opacity: .2; }
+            to { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        /* ===== Animations ===== */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 640px) {
+            .top-nav { padding: 12px 16px; }
+            .hero { min-height: 55vh; padding: 100px 16px 60px; }
+            .hero-meta { flex-direction: column; gap: 10px; }
+            .content-wrap { padding: 0 16px 80px; }
+            .cta-card { padding: 36px 28px; }
+            .nav-info { gap: 8px; }
+            .materi-content ul li { padding: 12px 16px 12px 40px; }
+            .materi-content ul li::before { left: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Reading Progress -->
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <!-- Background Decor -->
+    <div class="bg-decor" {% if mission.background_image %}style="background: url('{{ mission.background_image.url }}') center/cover fixed; opacity: 0.15;"{% endif %}>
+        {% if not mission.background_image %}
+        <span></span><span></span><span></span>
+        {% endif %}
+    </div>
+
+    <!-- Top Navigation -->
+    <nav class="top-nav" id="topNav">
+        <a href="{% url 'misi' %}" class="nav-back">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Kembali</span>
+        </a>
+        <div class="nav-info">
+            <div class="nav-xp"><i class="fa-solid fa-bolt"></i> +{{ mission.xp_reward }} XP</div>
+            <a href="{% url 'misi_kuis' mission.id %}" class="nav-quiz-btn">
+                Mulai Kuis <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-inner">
+            <div class="hero-badge">
+                <i class="fa-solid fa-book-open"></i>
+                Materi Pembelajaran
+            </div>
+            <h1 class="hero-title">{{ mission.title }}</h1>
+            <p class="hero-desc">{{ mission.description }}</p>
+            <div class="hero-meta">
+                <span><i class="fa-solid fa-clock"></i> ~10 menit baca</span>
+                <span><i class="fa-solid fa-star"></i> +{{ mission.xp_reward }} XP</span>
+                <span><i class="fa-solid fa-clipboard-question"></i> 2 Soal Kuis</span>
+            </div>
+        </div>
+        <div class="scroll-hint">
+            <span>Scroll untuk membaca</span>
+            <i class="fa-solid fa-chevron-down"></i>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="content-wrap">
+        <div class="materi-content" id="materiContent">
+            {% if mission.video_url %}
+            <div class="video-section reveal" style="text-align: center; margin-bottom: 30px; border-radius:16px; overflow:hidden; border:1px solid var(--border);">
+                <iframe id="videoIframe" width="100%" height="400" src="{{ mission.video_url }}" data-raw-url="{{ mission.video_url }}" frameborder="0" allowfullscreen style="max-width: 100%; background:var(--bg-card);"></iframe>
+                <script>
+                    (function(){
+                        const raw = document.getElementById('videoIframe').getAttribute('data-raw-url');
+                        if (raw.includes('watch?v=')) {
+                            document.getElementById('videoIframe').src = raw.replace('watch?v=', 'embed/').split('&')[0];
+                        } else if (raw.includes('youtu.be/')) {
+                            document.getElementById('videoIframe').src = raw.replace('youtu.be/', 'youtube.com/embed/').split('?')[0];
+                        }
+                    })();
+                </script>
+            </div>
+            {% endif %}
+            {% if mission.image %}
+            <div class="image-section" style="text-align: center; margin-bottom: 20px;">
+                <img src="{{ mission.image.url }}" alt="Gambar Materi" style="max-width: 100%; height: auto;">
+            </div>
+            {% endif %}
+            {% if module_info %}
+            <div class="module-section reveal" style="margin-bottom: 30px; padding: 24px; background: var(--bg-card); border: 1px solid var(--panel-border); border-radius: 16px;">
+                <h3 style="margin-bottom: 16px; color: var(--accent);"><i class="fa-solid fa-file-pdf"></i> Modul Pembelajaran: {{ module_info.filename }}</h3>
+                
+                {% if module_info.embed_type == 'pdf' %}
+                <div style="width: 100%; height: 600px; border: 1px solid var(--panel-border); border-radius: 12px; overflow: hidden; margin-bottom: 16px; background: var(--bg-primary);">
+                    <object data="{{ module_info.embed_url }}" type="application/pdf" width="100%" height="100%">
+                        <p>Browser Anda tidak mendukung preview PDF. <a href="{{ module_info.file_url }}" target="_blank">Klik di sini untuk membuka PDF</a></p>
+                    </object>
+                </div>
+                {% elif module_info.embed_type == 'doc' %}
+                <div style="width: 100%; height: 600px; border: 1px solid var(--panel-border); border-radius: 12px; overflow: hidden; margin-bottom: 16px;">
+                    <iframe src="{{ module_info.embed_url }}" width="100%" height="100%" style="border: none;"></iframe>
+                </div>
+                {% elif module_info.embed_type == 'text' %}
+                <div style="width: 100%; max-height: 600px; border: 1px solid var(--panel-border); border-radius: 12px; overflow: auto; margin-bottom: 16px; background: var(--bg-primary);">
+                    <iframe src="{{ module_info.embed_url }}" width="100%" height="100%" style="border: none; min-height: 400px;"></iframe>
+                </div>
+                {% else %}
+                <p style="margin-bottom: 16px;">Format file tidak didukung untuk preview. Silakan unduh file.</p>
+                {% endif %}
+                
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <a href="{{ module_info.file_url }}" target="_blank" class="cta-button" style="background: var(--accent-green);">
+                        <i class="fa-solid fa-external-link"></i> Buka di Tab Baru
+                    </a>
+                    <a href="{{ module_info.file_url }}" download class="cta-button" style="background: var(--accent-yellow);">
+                        <i class="fa-solid fa-download"></i> Unduh File
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+            {{ mission.content|safe }}
+        </div>
+
+        <!-- CTA to Quiz -->
+        <div class="cta-section reveal">
+            <div class="cta-card">
+                <h2>Siap Menguji Pemahamanmu? 🎯</h2>
+                <p>Kamu sudah selesai membaca materi ini. Saatnya buktikan pemahamanmu di kuis!</p>
+                <a href="{% url 'misi_kuis' mission.id %}" class="cta-btn">
+                    Mulai Kuis Sekarang <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        // === Reading Progress Bar ===
+        const progressBar = document.getElementById('readingProgress');
+        function updateProgress() {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            progressBar.style.width = pct + '%';
+        }
+
+        // === Auto-hide nav on scroll down, show on scroll up ===
+        const topNav = document.getElementById('topNav');
+        let lastScroll = 0;
+        function handleNavScroll() {
+            const current = window.scrollY;
+            if (current > lastScroll && current > 120) {
+                topNav.classList.add('hidden');
+            } else {
+                topNav.classList.remove('hidden');
+            }
+            lastScroll = current;
+        }
+
+        // === Scroll Reveal ===
+        function revealOnScroll() {
+            const reveals = document.querySelectorAll('.reveal');
+            reveals.forEach(el => {
+                const top = el.getBoundingClientRect().top;
+                if (top < window.innerHeight * 0.85) {
+                    el.classList.add('visible');
+                }
+            });
+        }
+
+        // === Wrap content children in reveal containers ===
+        const contentEl = document.getElementById('materiContent');
+        const children = Array.from(contentEl.children);
+        let currentGroup = null;
+
+        children.forEach((child, i) => {
+            const tag = child.tagName;
+            // Start a new group on h2 or h3
+            if (tag === 'H2' || tag === 'H3' || !currentGroup) {
+                currentGroup = document.createElement('div');
+                currentGroup.className = 'reveal';
+                child.parentNode.insertBefore(currentGroup, child);
+            }
+            currentGroup.appendChild(child);
+        });
+
+        // === Floating Particles ===
+        function createParticles() {
+            for (let i = 0; i < 15; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = (Math.random() * 100) + 'vw';
+                p.style.animationDuration = (8 + Math.random() * 12) + 's';
+                p.style.animationDelay = (Math.random() * 10) + 's';
+                p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+                document.body.appendChild(p);
+            }
+        }
+        createParticles();
+
+        // === Listeners ===
+        window.addEventListener('scroll', () => {
+            updateProgress();
+            handleNavScroll();
+            revealOnScroll();
+        }, { passive: true });
+
+        // Initial
+        updateProgress();
+        revealOnScroll();
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluasi - {{ mission.title }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --quiz-bg: #0d0620;
+            --option-red: #e74c3c;
+            --option-blue: #3498db;
+            --option-yellow: #f39c12;
+            --option-green: #2ecc71;
+            --correct: #2ecc71;
+            --wrong: #e74c3c;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--quiz-bg);
+            color: white;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .bg-shapes { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+        .bg-shapes span { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .35; animation: float 8s ease-in-out infinite alternate; }
+        .bg-shapes span:nth-child(1){ width:420px;height:420px;background:#e74c3c;top:-10%;left:-5%; }
+        .bg-shapes span:nth-child(2){ width:350px;height:350px;background:#e17055;bottom:-10%;right:-8%;animation-delay:2s; }
+        .bg-shapes span:nth-child(3){ width:280px;height:280px;background:#d63031;top:40%;left:50%;animation-delay:4s; }
+        @keyframes float { to { transform: translate(40px, -30px) scale(1.08); } }
+
+        .quiz-container {
+            position: relative; z-index: 1;
+            width: 100%; max-width: 900px;
+            margin: 0 auto; padding: 24px 20px;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+
+        .quiz-topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 20px; gap: 16px;
+        }
+        .mission-title { font-size: .95rem; font-weight: 500; opacity: .7; }
+        .retry-badge {
+            background: rgba(231,76,60,.2); border: 1px solid rgba(231,76,60,.4);
+            padding: 6px 16px; border-radius: 20px;
+            font-size: .8rem; font-weight: 600; color: #ff6b6b;
+        }
+        .quit-btn {
+            background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+            color: white; padding: 8px 18px; border-radius: 30px;
+            font-family: inherit; font-size: .85rem; cursor: pointer;
+            transition: .2s; text-decoration: none;
+        }
+        .quit-btn:hover { background: rgba(231,76,60,.3); }
+
+        .progress-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+        .progress-track { flex: 1; height: 10px; background: rgba(255,255,255,.1); border-radius: 20px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #e74c3c, #fd79a8); transition: width .5s cubic-bezier(.4,0,.2,1); }
+        .progress-text { font-size: .85rem; font-weight: 600; white-space: nowrap; }
+
+        .timer-ring-wrap { display: flex; align-items: center; gap: 10px; }
+        .timer-ring { width: 48px; height: 48px; position: relative; }
+        .timer-ring svg { transform: rotate(-90deg); }
+        .timer-ring circle { fill: none; stroke-width: 4; cx: 24; cy: 24; r: 20; }
+        .timer-ring .track { stroke: rgba(255,255,255,.1); }
+        .timer-ring .fill { stroke: #fd79a8; stroke-linecap: round; stroke-dasharray: 125.66; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear, stroke .3s; }
+        .timer-ring .fill.warning { stroke: #f39c12; }
+        .timer-ring .fill.danger { stroke: #e74c3c; }
+        .timer-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 700; }
+
+        .question-area { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .question-number { font-size: .9rem; font-weight: 600; color: #fd79a8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+        .question-text { font-size: 1.6rem; font-weight: 700; line-height: 1.4; margin-bottom: 32px; animation: fadeSlideUp .4s ease-out; }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; animation: fadeSlideUp .45s ease-out; }
+        .option-btn {
+            position: relative; padding: 22px 24px; border-radius: 16px;
+            border: 2.5px solid transparent; font-family: inherit; font-size: 1.05rem;
+            font-weight: 600; color: white; cursor: pointer;
+            display: flex; align-items: center; gap: 14px;
+            transition: transform .15s, box-shadow .2s, border-color .2s, opacity .3s;
+            min-height: 80px;
+        }
+        .option-btn::before { content: ''; position: absolute; inset: 0; background: inherit; opacity: .18; border-radius: inherit; }
+        .option-btn .option-shape { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; background: rgba(255,255,255,.2); }
+        .option-btn .option-text { position: relative; z-index: 1; text-align: left; }
+        .option-btn:nth-child(1) { background: var(--option-red); }
+        .option-btn:nth-child(2) { background: var(--option-blue); }
+        .option-btn:nth-child(3) { background: var(--option-yellow); }
+        .option-btn:nth-child(4) { background: var(--option-green); }
+        .option-btn:hover:not(.disabled) { transform: scale(1.03); box-shadow: 0 8px 30px rgba(0,0,0,.3); }
+        .option-btn:active:not(.disabled) { transform: scale(.97); }
+        .option-btn.disabled { cursor: default; pointer-events: none; }
+        .option-btn.fade-out { opacity: .35; }
+
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .quiz-footer { display: flex; justify-content: center; gap: 32px; padding: 20px 0 12px; margin-top: auto; }
+        .score-item { text-align: center; }
+        .score-item .score-val { font-size: 1.4rem; font-weight: 800; }
+        .score-item .score-label { font-size: .75rem; opacity: .5; text-transform: uppercase; letter-spacing: 1px; }
+        .score-correct .score-val { color: var(--correct); }
+        .score-wrong .score-val { color: var(--wrong); }
+
+        .hidden-form { display: none; }
+
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+            .question-text { font-size: 1.25rem; }
+            .option-btn { padding: 18px 18px; min-height: 64px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-shapes"><span></span><span></span><span></span></div>
+
+    <div class="quiz-container">
+        <div class="quiz-topbar">
+            <span class="mission-title"><i class="fa-solid fa-rotate-right"></i> {{ mission.title }}</span>
+            <span class="retry-badge"><i class="fa-solid fa-circle-exclamation"></i> Perbaiki Jawaban</span>
+            <div class="timer-ring-wrap">
+                <div class="timer-ring">
+                    <svg width="48" height="48"><circle class="track" /><circle class="fill" id="timerCircle" /></svg>
+                    <div class="timer-text" id="timerText">30</div>
+                </div>
+            </div>
+            <a href="{% url 'misi' %}" class="quit-btn"><i class="fa-solid fa-xmark"></i> Keluar</a>
+        </div>
+
+        <div class="progress-wrap">
+            <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="progress-text" id="progressText">1 / ?</div>
+        </div>
+
+        <div class="question-area">
+            <div class="question-number" id="qNumber">SOAL 1</div>
+            <div class="question-text" id="qText"></div>
+            <div class="options-grid" id="optionsGrid"></div>
+        </div>
+
+        <div class="quiz-footer">
+            <div class="score-item score-correct">
+                <div class="score-val" id="scoreCorrect">0</div>
+                <div class="score-label">Diperbaiki</div>
+            </div>
+            <div class="score-item score-wrong">
+                <div class="score-val" id="scoreWrong">0</div>
+                <div class="score-label">Masih Salah</div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="hidden-form" id="quizForm">
+        {% csrf_token %}
+        <div id="hiddenInputs"></div>
+    </form>
+
+    <script>
+    (function() {
+        const questions = [
+            {% for question in questions %}
+            {
+                id: {{ question.id }},
+                text: "{{ question.text|escapejs }}",
+                choices: [
+                    {% for choice in question.choices.all %}
+                    { id: {{ choice.id }}, text: "{{ choice.text|escapejs }}" },
+                    {% endfor %}
+                ]
+            },
+            {% endfor %}
+        ];
+
+        const SHAPES = [
+            '<i class="fa-solid fa-diamond"></i>',
+            '<i class="fa-solid fa-circle"></i>',
+            '<i class="fa-solid fa-square"></i>',
+            '<i class="fa-solid fa-play"></i>'
+        ];
+
+        const TIMER_DURATION = 30;
+        const CIRCUMFERENCE = 2 * Math.PI * 20;
+        let currentQ = 0;
+        let answers = {};
+        let timerInterval = null;
+        let timeLeft = TIMER_DURATION;
+
+        const qNumber = document.getElementById('qNumber');
+        const qText = document.getElementById('qText');
+        const optionsGrid = document.getElementById('optionsGrid');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const timerText = document.getElementById('timerText');
+        const timerCircle = document.getElementById('timerCircle');
+
+        function renderQuestion() {
+            const q = questions[currentQ];
+            qNumber.textContent = 'SOAL ' + (currentQ + 1);
+            qText.textContent = q.text;
+            qText.style.animation = 'none'; qText.offsetHeight; qText.style.animation = 'fadeSlideUp .4s ease-out';
+
+            optionsGrid.innerHTML = '';
+            optionsGrid.style.animation = 'none'; optionsGrid.offsetHeight; optionsGrid.style.animation = 'fadeSlideUp .45s ease-out';
+
+            q.choices.forEach((c, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.type = 'button';
+                btn.innerHTML = '<div class="option-shape">' + SHAPES[i] + '</div><span class="option-text">' + c.text + '</span>';
+                btn.addEventListener('click', () => selectAnswer(c.id, btn));
+                optionsGrid.appendChild(btn);
+            });
+
+            progressFill.style.width = ((currentQ) / questions.length * 100) + '%';
+            progressText.textContent = (currentQ + 1) + ' / ' + questions.length;
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = TIMER_DURATION;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) { clearInterval(timerInterval); advanceQuestion(); }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            timerText.textContent = timeLeft;
+            const offset = CIRCUMFERENCE * (1 - timeLeft / TIMER_DURATION);
+            timerCircle.style.strokeDasharray = CIRCUMFERENCE;
+            timerCircle.style.strokeDashoffset = offset;
+            timerCircle.classList.remove('warning', 'danger');
+            if (timeLeft <= 5) timerCircle.classList.add('danger');
+            else if (timeLeft <= 10) timerCircle.classList.add('warning');
+        }
+
+        function selectAnswer(choiceId, btnEl) {
+            clearInterval(timerInterval);
+            const allBtns = optionsGrid.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.classList.add('disabled'));
+            answers[questions[currentQ].id] = choiceId;
+
+            btnEl.style.transform = 'scale(1.04)';
+            btnEl.style.boxShadow = '0 0 30px rgba(255,255,255,.3)';
+            btnEl.style.borderColor = 'rgba(255,255,255,.6)';
+            allBtns.forEach(b => { if (b !== btnEl) b.classList.add('fade-out'); });
+
+            setTimeout(() => advanceQuestion(), 600);
+        }
+
+        function advanceQuestion() {
+            currentQ++;
+            if (currentQ < questions.length) {
+                renderQuestion();
+            } else {
+                submitQuiz();
+            }
+        }
+
+        function submitQuiz() {
+            const hiddenInputs = document.getElementById('hiddenInputs');
+            hiddenInputs.innerHTML = '';
+            for (const [qId, cId] of Object.entries(answers)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'question_' + qId;
+                input.value = cId;
+                hiddenInputs.appendChild(input);
+            }
+            progressFill.style.width = '100%';
+            progressText.textContent = questions.length + ' / ' + questions.length;
+            qText.textContent = 'Mengirim jawaban...';
+            qNumber.textContent = 'SELESAI';
+            optionsGrid.innerHTML = '<div style="text-align:center;padding:40px;grid-column:1/-1;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2.5rem;color:#fd79a8;"></i></div>';
+            setTimeout(() => document.getElementById('quizForm').submit(), 1000);
+        }
+
+        if (questions.length > 0) renderQuestion();
+    })();
+    </script>
+</body>
+</html>

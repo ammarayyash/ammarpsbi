@@ -1,0 +1,154 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - Illustrium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'dashboard/style.css?v=2.2' %}">
+    <script src="{% static 'dashboard/script.js' %}?v=2.0" defer></script>
+</head>
+<body>
+    <div class="dashboard-container two-columns">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon"><i class="fa-solid fa-layer-group"></i></div>
+                    <h2 class="sidebar-text">Illustrium</h2>
+                </div>
+                <p class="subtitle sidebar-text">Belajar Gambar Vektor</p>
+                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+                    <i class="fa-solid fa-chevron-left" id="toggleIcon"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="{% url 'index' %}" data-tooltip="Dashboard"><i class="fa-solid fa-house"></i><span class="sidebar-text"> Dashboard</span></a></li>
+                    <li><a href="{% url 'misi' %}" data-tooltip="Misi"><i class="fa-solid fa-bullseye"></i><span class="sidebar-text"> Misi</span></a></li>
+                    <li><a href="{% url 'kursus' %}" data-tooltip="Kursus"><i class="fa-solid fa-book-open"></i><span class="sidebar-text"> Kursus</span></a></li>
+                    <li class="active"><a href="{% url 'leaderboard' %}" data-tooltip="Leaderboard"><i class="fa-solid fa-trophy"></i><span class="sidebar-text"> Leaderboard</span></a></li>
+                    <li><a href="{% url 'komunitas' %}" data-tooltip="Komunitas"><i class="fa-solid fa-users"></i><span class="sidebar-text"> Komunitas</span></a></li>
+                    <li><a href="{% url 'pengaturan' %}" data-tooltip="Pengaturan"><i class="fa-solid fa-gear"></i><span class="sidebar-text"> Pengaturan</span></a></li>
+                    {% if request.user.is_staff %}
+                    <li class="admin-link"><a href="{% url 'admin_dashboard' %}" data-tooltip="Admin Panel"><i class="fa-solid fa-shield-halved"></i><span class="sidebar-text"> Admin Panel</span></a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer"><button id="themeToggleBtn" style="background:var(--panel-bg); border:1px solid var(--panel-border); color:var(--text-secondary); width:100%; padding:10px; border-radius:12px; margin-bottom:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:0.2s;"><i class="fa-solid fa-moon"></i><span class="sidebar-text">Tema Malam</span></button>
+                <div class="user-profile">
+                    <img src="https://i.pravatar.cc/150?u={{ request.user.email }}" alt="User Avatar" class="avatar">
+                    <div class="user-info">
+                        <div class="user-details-header">
+                            <h4>{{ request.user.first_name|default:request.user.username }}</h4>
+                            <span class="user-level">Lvl. {{ user_profile.level }}</span>
+                        </div>
+                        <a href="{% url 'logout' %}" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- KONTEN UTAMA -->
+        <main class="main-content">
+            <header class="section-header" style="text-align: center; justify-content: center; margin-bottom: 16px;">
+                <div>
+                    <h1 style="font-size: 2.2rem; margin-bottom: 8px;">Global Leaderboard</h1>
+                    <p>Peringkat teratas dari seluruh pelajar Illustrium.</p>
+                </div>
+            </header>
+
+            {% if podium|length >= 3 %}
+            <div class="podium-container">
+                <!-- Peringkat 2 -->
+                <div class="podium-item rank-2">
+                    <div class="podium-name">{{ podium.1.user.first_name|default:podium.1.user.username }}</div>
+                    <div class="podium-xp">{{ podium.1.xp }} XP</div>
+                    <img src="https://i.pravatar.cc/150?u={{ podium.1.user.email }}" alt="Rank 2" class="podium-avatar">
+                    <div class="podium-base">2</div>
+                </div>
+                
+                <!-- Peringkat 1 -->
+                <div class="podium-item rank-1">
+                    <i class="fa-solid fa-crown" style="color: #fbbf24; font-size: 2rem; margin-bottom: 8px;"></i>
+                    <div class="podium-name">{{ podium.0.user.first_name|default:podium.0.user.username }}</div>
+                    <div class="podium-xp">{{ podium.0.xp }} XP</div>
+                    <img src="https://i.pravatar.cc/150?u={{ podium.0.user.email }}" alt="Rank 1" class="podium-avatar">
+                    <div class="podium-base">1</div>
+                </div>
+                
+                <!-- Peringkat 3 -->
+                <div class="podium-item rank-3">
+                    <div class="podium-name">{{ podium.2.user.first_name|default:podium.2.user.username }}</div>
+                    <div class="podium-xp">{{ podium.2.xp }} XP</div>
+                    <img src="https://i.pravatar.cc/150?u={{ podium.2.user.email }}" alt="Rank 3" class="podium-avatar">
+                    <div class="podium-base">3</div>
+                </div>
+            </div>
+            {% elif podium %}
+            <div class="podium-container" style="justify-content: center;">
+                {% for p in podium %}
+                <div class="podium-item rank-{{ forloop.counter }}">
+                    {% if forloop.first %}<i class="fa-solid fa-crown" style="color: #fbbf24; font-size: 2rem; margin-bottom: 8px;"></i>{% endif %}
+                    <div class="podium-name">{{ p.user.first_name|default:p.user.username }}</div>
+                    <div class="podium-xp">{{ p.xp }} XP</div>
+                    <img src="https://i.pravatar.cc/150?u={{ p.user.email }}" alt="Rank {{ forloop.counter }}" class="podium-avatar">
+                    <div class="podium-base">{{ forloop.counter }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="glass-panel" style="padding: 12px;">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px; text-align: center;">Peringkat</th>
+                            <th>Pelajar</th>
+                            <th>Level</th>
+                            <th style="text-align: right;">Total XP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in rest %}
+                        <tr class="leaderboard-row {% if p.user == request.user %}current-user{% endif %}">
+                            <td style="text-align: center; font-weight: 700; color: {% if p.user == request.user %}var(--accent-blue){% else %}var(--text-secondary){% endif %};">{{ forloop.counter|add:3 }}</td>
+                            <td>
+                                <div class="user-cell">
+                                    <img src="https://i.pravatar.cc/150?u={{ p.user.email }}" alt="{{ p.user.username }}">
+                                    <div>
+                                        <div style="font-weight: 600; {% if p.user == request.user %}color: var(--accent-blue);{% endif %}">
+                                            {{ p.user.first_name|default:p.user.username }}{% if p.user == request.user %} (Anda){% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="user-level" {% if p.user == request.user %}style="background: var(--accent-blue); color: white;"{% endif %}>
+                                    Lvl. {{ p.level }}
+                                </span>
+                            </td>
+                            <td style="text-align: right; color: var(--accent-green); font-weight: 600;">{{ p.xp }} XP</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                Belum ada data peringkat lainnya.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+        </main>
+    </div>
+</body>
+</html>

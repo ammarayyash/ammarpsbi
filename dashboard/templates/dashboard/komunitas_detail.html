@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ room.name }} - Ruang Kelas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'dashboard/style.css?v=2.2' %}">
+    <script src="{% static 'dashboard/script.js' %}?v=2.0" defer></script>
+</head>
+<body>
+    <div class="dashboard-container two-columns">
+        <aside class="sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon"><i class="fa-solid fa-layer-group"></i></div>
+                    <h2 class="sidebar-text">Illustrium</h2>
+                </div>
+                <p class="subtitle sidebar-text">Belajar Gambar Vektor</p>
+                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+                    <i class="fa-solid fa-chevron-left" id="toggleIcon"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="{% url 'index' %}" data-tooltip="Dashboard"><i class="fa-solid fa-house"></i><span class="sidebar-text"> Dashboard</span></a></li>
+                    <li><a href="{% url 'misi' %}" data-tooltip="Misi"><i class="fa-solid fa-bullseye"></i><span class="sidebar-text"> Misi</span></a></li>
+                    <li><a href="{% url 'kursus' %}" data-tooltip="Kursus"><i class="fa-solid fa-book-open"></i><span class="sidebar-text"> Kursus</span></a></li>
+                    <li><a href="{% url 'leaderboard' %}" data-tooltip="Leaderboard"><i class="fa-solid fa-trophy"></i><span class="sidebar-text"> Leaderboard</span></a></li>
+                    <li class="active"><a href="{% url 'komunitas' %}" data-tooltip="Komunitas"><i class="fa-solid fa-users"></i><span class="sidebar-text"> Komunitas</span></a></li>
+                    <li><a href="{% url 'pengaturan' %}" data-tooltip="Pengaturan"><i class="fa-solid fa-gear"></i><span class="sidebar-text"> Pengaturan</span></a></li>
+                    {% if request.user.is_staff %}
+                    <li class="admin-link"><a href="{% url 'admin_dashboard' %}" data-tooltip="Admin Panel"><i class="fa-solid fa-shield-halved"></i><span class="sidebar-text"> Admin Panel</span></a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            <div class="sidebar-footer"><button id="themeToggleBtn" style="background:var(--panel-bg); border:1px solid var(--panel-border); color:var(--text-secondary); width:100%; padding:10px; border-radius:12px; margin-bottom:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:0.2s;"><i class="fa-solid fa-moon"></i><span class="sidebar-text">Tema Malam</span></button>
+                <div class="user-profile">
+                    <img src="{{ request.user.userprofile.avatar_url }}" alt="Avatar" class="avatar">
+                    <div class="user-info">
+                        <div class="user-details-header">
+                            <h4>{{ request.user.first_name|default:request.user.username }}</h4>
+                            <span class="user-level">Lvl. {{ profile.level }}</span>
+                        </div>
+                        <a href="{% url 'logout' %}" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <a href="{% url 'komunitas' %}" style="color: var(--text-secondary); text-decoration: none;">
+                    <i class="fa-solid fa-arrow-left"></i> Kembali ke daftar kelas
+                </a>
+                {% if request.user.is_staff %}
+                <a href="{% url 'admin_community_room_manage' room.id %}" class="btn btn-ghost">
+                    <i class="fa-solid fa-pen"></i> Edit Konten Kelas
+                </a>
+                {% endif %}
+            </div>
+
+            {% if messages %}
+            <div style="margin-bottom: 16px;">
+                {% for message in messages %}
+                <div style="
+                    padding: 12px 20px; border-radius: 12px; margin-bottom: 12px;
+                    font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 10px;
+                    animation: slideDown 0.3s ease;
+                    {% if message.tags == 'success' %}
+                    background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: #10b981;
+                    {% elif message.tags == 'error' %}
+                    background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #f87171;
+                    {% else %}
+                    background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25); color: #818cf8;
+                    {% endif %}
+                ">
+                    <i class="fa-solid fa-circle-info"></i> {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="glass-panel" style="padding: 20px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap;">
+                    <div>
+                        <h1 style="margin-bottom: 8px;">{{ room.name }}</h1>
+                        <p style="margin: 0; color: var(--text-secondary);">
+                            {{ room.description|default:'Ruang kelas berbasis token untuk pembelajaran.' }}
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <span class="status-badge staff">Token: {{ room.token }}</span>
+                        {% if room.content_mode == 'material' %}
+                        <span class="status-badge user"><i class="fa-solid fa-book-open"></i>&nbsp;Materi</span>
+                        {% elif room.content_mode == 'quiz' %}
+                        <span class="status-badge staff"><i class="fa-solid fa-list-check"></i>&nbsp;Kuis</span>
+                        {% else %}
+                        <span class="status-badge superuser"><i class="fa-solid fa-layer-group"></i>&nbsp;Materi + Kuis</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if room.content %}
+                <div style="margin-top: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--panel-border); border-radius: 12px; padding: 14px;">
+                    {{ room.content|linebreaks }}
+                </div>
+                {% endif %}
+            </div>
+
+            {% if room.has_material_section %}
+            <section class="glass-panel" style="padding: 20px; margin-bottom: 20px;">
+                <h2 style="margin-bottom: 14px;"><i class="fa-solid fa-book-open"></i> Materi Pembelajaran</h2>
+                {% for material in materials %}
+                <div style="padding: 16px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; margin-bottom: 12px;">
+                    <h3 style="margin-bottom: 8px; font-size: 1.05rem;">{{ forloop.counter }}. {{ material.title }}</h3>
+                    {% if material.body %}
+                    <div style="color: var(--text-secondary); margin-bottom: 10px;">{{ material.body|linebreaks }}</div>
+                    {% endif %}
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        {% if material.media_url %}
+                        <a href="{{ material.media_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
+                            <i class="fa-solid fa-link"></i> Buka Link Media
+                        </a>
+                        {% endif %}
+                        {% if material.media_file %}
+                        <a href="{{ material.media_file.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                            <i class="fa-solid fa-file-arrow-down"></i> Buka File Materi
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p style="color: var(--text-secondary); margin: 0;">Belum ada materi pada kelas ini.</p>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if room.has_quiz_section %}
+            <section class="glass-panel" style="padding: 20px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;">
+                    <h2 style="margin: 0;"><i class="fa-solid fa-list-check"></i> Kuis Kelas</h2>
+                    {% if latest_submission %}
+                    <span class="status-badge user">Nilai terakhir: {{ latest_submission.score }}/{{ latest_submission.total_questions }}</span>
+                    {% endif %}
+                </div>
+
+                {% if quiz_result %}
+                <div style="margin-bottom: 16px; padding: 12px; border-radius: 10px; border: 1px solid rgba(99,102,241,0.2); background: rgba(99,102,241,0.08);">
+                    Skor percobaan ini: <strong>{{ quiz_result.score }}/{{ quiz_result.total }}</strong> ({{ quiz_result.percentage }}%).
+                </div>
+                {% endif %}
+
+                {% if questions %}
+                <form method="post" style="display: flex; flex-direction: column; gap: 14px;">
+                    {% csrf_token %}
+                    {% for q in questions %}
+                    <div style="padding: 14px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;">
+                        <p style="margin: 0 0 10px 0; font-weight: 600;">{{ forloop.counter }}. {{ q.question_text }}</p>
+                        <label style="display: block; margin-bottom: 6px;"><input type="radio" name="question_{{ q.id }}" value="A"> A. {{ q.option_a }}</label>
+                        <label style="display: block; margin-bottom: 6px;"><input type="radio" name="question_{{ q.id }}" value="B"> B. {{ q.option_b }}</label>
+                        <label style="display: block; margin-bottom: 6px;"><input type="radio" name="question_{{ q.id }}" value="C"> C. {{ q.option_c }}</label>
+                        <label style="display: block;"><input type="radio" name="question_{{ q.id }}" value="D"> D. {{ q.option_d }}</label>
+                    </div>
+                    {% endfor %}
+                    <div>
+                        <button type="submit" class="cta-button">
+                            <i class="fa-solid fa-paper-plane"></i> Kirim Jawaban Kuis
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <p style="color: var(--text-secondary); margin: 0;">Belum ada soal kuis untuk kelas ini.</p>
+                {% endif %}
+            </section>
+            {% endif %}
+        </main>
+    </div>
+</body>
+</html>

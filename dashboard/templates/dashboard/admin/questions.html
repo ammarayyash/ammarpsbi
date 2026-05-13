@@ -1,0 +1,159 @@
+{% extends "dashboard/admin/base_admin.html" %}
+
+{% block title %}Kelola Soal - {{ mission.title }}{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">/</span>
+<a href="{% url 'admin_missions' %}">Kelola Misi</a>
+<span class="sep">/</span>
+<span class="current">Soal: {{ mission.title|truncatechars:30 }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div>
+        <h1>Kelola Soal</h1>
+        <p>Misi: <strong>{{ mission.title }}</strong> &middot; {{ questions|length }} soal</p>
+    </div>
+    <div class="action-buttons">
+        <a href="{% url 'admin_mission_edit' mission.id %}" class="btn btn-ghost">
+            <i class="fa-solid fa-arrow-left"></i> Kembali ke Misi
+        </a>
+    </div>
+</div>
+
+<!-- Existing Questions -->
+{% for q in questions %}
+<div class="question-card" id="q-card-{{ q.id }}">
+    <div class="question-card-header">
+        <span class="question-number">Soal #{{ forloop.counter }}</span>
+        <button
+            type="button"
+            class="btn btn-danger btn-sm"
+            onclick="confirmDeleteQuestion('{{ q.text|truncatechars:40|escapejs }}', '{% url 'admin_question_delete' mission.id q.id %}')"
+        >
+            <i class="fa-solid fa-trash"></i> Hapus
+        </button>
+    </div>
+    <p style="margin-bottom: 12px; font-weight: 500;">{{ q.text }}</p>
+    <div class="choices-list">
+        {% for c in q.choices.all %}
+        <div class="choice-item {% if c.is_correct %}correct{% endif %}">
+            <div class="choice-indicator">
+                {% if c.is_correct %}
+                    <i class="fa-solid fa-check"></i>
+                {% endif %}
+            </div>
+            <span>{{ c.text }}</span>
+            {% if c.is_correct %}
+                <span class="status-badge user" style="margin-left: auto; font-size: 0.7rem;">Benar</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% empty %}
+<div class="admin-form-card">
+    <div class="admin-empty-state">
+        <i class="fa-solid fa-list-check"></i>
+        <h3>Belum ada soal</h3>
+        <p>Tambahkan soal pertama untuk misi ini menggunakan form di bawah.</p>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Add New Question Form -->
+<div class="admin-form-card" style="border: 2px dashed rgba(99, 102, 241, 0.3);">
+    <h2><i class="fa-solid fa-circle-plus" style="margin-right: 8px; color: var(--accent-green);"></i> Tambah Soal Baru</h2>
+    <form method="POST" action="{% url 'admin_question_create' mission.id %}" id="addQuestionForm">
+        {% csrf_token %}
+        <div class="form-group" style="margin-bottom: 24px;">
+            <label>Pertanyaan <span class="required">*</span></label>
+            <textarea name="question_text" class="form-control" rows="3" placeholder="Tulis pertanyaan di sini..." required></textarea>
+        </div>
+
+        <label style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 12px; display: block;">
+            Pilihan Jawaban <span class="required">*</span>
+        </label>
+
+        <div class="choice-input-row">
+            <span class="question-number">A</span>
+            <input type="text" name="choice_1" class="form-control" placeholder="Pilihan A" required>
+            <label class="correct-toggle">
+                <input type="radio" name="correct_choice" value="1" checked> Benar
+            </label>
+        </div>
+        <div class="choice-input-row">
+            <span class="question-number">B</span>
+            <input type="text" name="choice_2" class="form-control" placeholder="Pilihan B" required>
+            <label class="correct-toggle">
+                <input type="radio" name="correct_choice" value="2"> Benar
+            </label>
+        </div>
+        <div class="choice-input-row">
+            <span class="question-number">C</span>
+            <input type="text" name="choice_3" class="form-control" placeholder="Pilihan C" required>
+            <label class="correct-toggle">
+                <input type="radio" name="correct_choice" value="3"> Benar
+            </label>
+        </div>
+        <div class="choice-input-row">
+            <span class="question-number">D</span>
+            <input type="text" name="choice_4" class="form-control" placeholder="Pilihan D (opsional)">
+            <label class="correct-toggle">
+                <input type="radio" name="correct_choice" value="4"> Benar
+            </label>
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+            <label>Urutan Soal</label>
+            <input type="number" name="order" class="form-control" value="{{ next_order }}" min="0" style="max-width: 200px;">
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">
+                <i class="fa-solid fa-plus"></i> Tambah Soal
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Delete Question Modal -->
+<div class="delete-confirm-overlay" id="deleteQuestionModal">
+    <div class="delete-confirm-box">
+        <div class="delete-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3>Hapus Soal?</h3>
+        <p>Apakah kamu yakin ingin menghapus soal: <strong id="deleteQuestionText"></strong>? Semua jawaban pengguna untuk soal ini juga akan dihapus.</p>
+        <div class="delete-confirm-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeDeleteQuestionModal()">Batal</button>
+            <form id="deleteQuestionForm" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fa-solid fa-trash"></i> Hapus
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDeleteQuestion(questionText, deleteUrl) {
+    document.getElementById('deleteQuestionText').textContent = questionText;
+    document.getElementById('deleteQuestionForm').action = deleteUrl;
+    document.getElementById('deleteQuestionModal').classList.add('active');
+}
+
+function closeDeleteQuestionModal() {
+    document.getElementById('deleteQuestionModal').classList.remove('active');
+}
+
+// Close modal on overlay click
+document.getElementById('deleteQuestionModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteQuestionModal();
+});
+</script>
+{% endblock %}

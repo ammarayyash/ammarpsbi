@@ -1,0 +1,256 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Level 4 – Master of Illustration</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a1a;--card:rgba(255,255,255,.05);--border:rgba(255,255,255,.1);--accent:#10b981;--green:#22c55e;--red:#ef4444}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:#f0f0f5;min-height:100vh;overflow-x:hidden}
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+.bg span{position:absolute;border-radius:50%;filter:blur(90px);opacity:.22;animation:fl 10s ease-in-out infinite alternate}
+.bg span:nth-child(1){width:500px;height:500px;background:#059669;top:-10%;left:-10%}
+.bg span:nth-child(2){width:350px;height:350px;background:#047857;bottom:-10%;right:-5%;animation-delay:4s}
+.bg span:nth-child(3){width:280px;height:280px;background:#0f766e;top:40%;left:55%;animation-delay:7s}
+@keyframes fl{to{transform:translate(30px,-20px) scale(1.1)}}
+.wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:24px 16px;min-height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px}
+.level-badge{background:linear-gradient(135deg,#059669,#10b981);padding:6px 18px;border-radius:20px;font-weight:700;font-size:.85rem;letter-spacing:1px}
+.score-disp{font-size:1.1rem;font-weight:700;color:var(--accent)}
+.quit-btn{background:var(--card);border:1px solid var(--border);color:#fff;padding:8px 18px;border-radius:20px;font-family:inherit;font-size:.85rem;cursor:pointer;text-decoration:none;transition:.2s}
+.quit-btn:hover{background:rgba(239,68,68,.3)}
+.prog-wrap{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.prog-track{flex:1;height:8px;background:rgba(255,255,255,.1);border-radius:20px;overflow:hidden}
+.prog-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#059669,#34d399);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.prog-text{font-size:.85rem;font-weight:600;white-space:nowrap}
+/* Brief */
+.brief-box{background:linear-gradient(135deg,rgba(5,150,105,.15),rgba(16,185,129,.08));border:1px solid rgba(16,185,129,.3);border-radius:16px;padding:16px 20px;margin-bottom:20px;animation:fadeUp .4s ease}
+.brief-title{font-size:.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.brief-content{font-size:1rem;font-weight:600;line-height:1.6}
+.brief-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.brief-tag{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);padding:4px 12px;border-radius:12px;font-size:.75rem;font-weight:600;color:#6ee7b7}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+/* Builder layout */
+.builder{display:grid;grid-template-columns:220px 1fr;gap:20px;flex:1}
+.mascot-area{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.mascot-canvas{width:180px;height:200px}
+.mascot-canvas svg{width:100%;height:100%}
+.mascot-title{font-size:.75rem;opacity:.5;text-align:center}
+.done-btn{background:linear-gradient(135deg,#059669,#10b981);border:none;color:white;padding:10px 24px;border-radius:20px;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;width:100%;transition:.2s;margin-top:auto}
+.done-btn:hover{transform:scale(1.03);box-shadow:0 4px 20px rgba(16,185,129,.4)}
+.options-panel{display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.cat-block{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px}
+.cat-label{font-size:.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.cat-options{display:flex;gap:8px;flex-wrap:wrap}
+.opt-btn{background:rgba(255,255,255,.06);border:2px solid var(--border);border-radius:10px;padding:8px 14px;font-family:inherit;font-size:.82rem;font-weight:600;color:#f0f0f5;cursor:pointer;transition:.2s;white-space:nowrap}
+.opt-btn:hover{border-color:var(--accent);background:rgba(16,185,129,.1)}
+.opt-btn.active{border-color:var(--accent);background:rgba(16,185,129,.2);color:#6ee7b7}
+/* Result overlay */
+.result-overlay{position:fixed;inset:0;background:rgba(5,10,20,.92);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeUp .4s}
+.result-box{background:linear-gradient(135deg,#0f2027,#1a3a2a);border:1px solid rgba(16,185,129,.3);border-radius:20px;padding:36px;max-width:480px;width:90%;text-align:center}
+.result-score-big{font-size:3.5rem;font-weight:900;background:linear-gradient(135deg,#10b981,#6ee7b7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:12px 0}
+.elem-check{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0;text-align:left}
+.elem-item{background:rgba(255,255,255,.05);border-radius:8px;padding:8px 12px;font-size:.8rem;display:flex;align-items:center;gap:8px}
+.result-action-btn{background:linear-gradient(135deg,#059669,#10b981);border:none;color:white;padding:13px 36px;border-radius:24px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:4px;transition:.2s}
+.result-action-btn:hover{transform:scale(1.04);box-shadow:0 6px 24px rgba(16,185,129,.4)}
+.hidden{display:none}
+@media(max-width:640px){.builder{grid-template-columns:1fr}.mascot-area{flex-direction:row;flex-wrap:wrap;justify-content:center}.mascot-canvas{width:130px;height:150px}}
+</style>
+</head>
+<body>
+<div class="bg"><span></span><span></span><span></span></div>
+<div class="wrap">
+  <div class="topbar">
+    <div class="level-badge">🎭 LEVEL 4</div>
+    <div class="score-disp">Skor: <span id="scoreDisp">0</span>/100</div>
+    <a href="{% url 'misi' %}" class="quit-btn"><i class="fa fa-xmark"></i> Keluar</a>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    <div class="prog-text" id="progText">Maskot 1/2</div>
+  </div>
+  <div class="brief-box">
+    <div class="brief-title">📋 Creative Brief</div>
+    <div class="brief-content" id="briefContent"></div>
+    <div class="brief-tags" id="briefTags"></div>
+  </div>
+  <div class="builder">
+    <div class="mascot-area">
+      <div class="mascot-title">Maskot Anda</div>
+      <div class="mascot-canvas"><svg id="mascotSvg" viewBox="0 0 180 200" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <button class="done-btn" onclick="doneClick()"><i class="fa fa-check"></i> Selesai!</button>
+    </div>
+    <div class="options-panel" id="optionsPanel"></div>
+  </div>
+</div>
+
+<form id="scoreForm" method="POST" action="{% url 'gamifikasi_level4' %}">
+  {% csrf_token %}
+  <input type="hidden" name="score" id="scoreInput">
+</form>
+
+<script>
+(function(){
+const BRIEFS=[
+  {
+    text:"Maskot untuk kafe kopi: karakter ramah, bertelinga panjang, membawa cangkir kopi.",
+    tags:["Ramah","Telinga Panjang","Cangkir Kopi","Warna Cokelat"],
+    required:{kepala:"bulat",telinga:"panjang",mata:"senang",mulut:"senyum",aksesoris:"kopi",warna:"cokelat"},
+    warnaPrimary:{cokelat:"#8B5E3C",hijau:"#4ade80",krem:"#F5DEB3"}
+  },
+  {
+    text:"Maskot taman kota: ramah, bertopi bunga, warna hijau alami.",
+    tags:["Ramah","Topi Bunga","Warna Hijau","Taman"],
+    required:{kepala:"bulat",telinga:"bundar",mata:"senang",mulut:"senyum",aksesoris:"topi",warna:"hijau"},
+    warnaPrimary:{cokelat:"#8B5E3C",hijau:"#4ade80",krem:"#F5DEB3"}
+  }
+];
+
+const CATS=[
+  {id:"kepala",label:"Kepala",opts:["bulat","lonjong","kotak"]},
+  {id:"telinga",label:"Telinga",opts:["panjang","bundar","runcing"]},
+  {id:"mata",label:"Mata",opts:["senang","sipit","besar"]},
+  {id:"mulut",label:"Mulut",opts:["senyum","terbuka","gigi"]},
+  {id:"aksesoris",label:"Aksesoris",opts:["kopi","topi","daun"]},
+  {id:"warna",label:"Warna Tubuh",opts:["cokelat","hijau","krem"]},
+];
+
+let briefIdx=0,totalScore=0;
+let sel={kepala:"bulat",telinga:"panjang",mata:"senang",mulut:"senyum",aksesoris:"kopi",warna:"cokelat"};
+
+function drawMascot(){
+  const s=sel;
+  const bodyColor=s.warna==="cokelat"?"#8B5E3C":s.warna==="hijau"?"#4ade80":"#F5DEB3";
+  const outlineColor=s.warna==="cokelat"?"#5C3A1E":s.warna==="hijau"?"#16a34a":"#d4b896";
+  // Head shape
+  let headPath="";
+  if(s.kepala==="bulat") headPath=`<ellipse cx="90" cy="70" rx="50" ry="52" fill="${bodyColor}" stroke="${outlineColor}" stroke-width="3"/>`;
+  else if(s.kepala==="lonjong") headPath=`<ellipse cx="90" cy="70" rx="36" ry="56" fill="${bodyColor}" stroke="${outlineColor}" stroke-width="3"/>`;
+  else headPath=`<rect x="44" y="22" width="92" height="96" rx="12" fill="${bodyColor}" stroke="${outlineColor}" stroke-width="3"/>`;
+  // Ears
+  let earPath="";
+  if(s.telinga==="panjang") earPath=`<ellipse cx="52" cy="30" rx="14" ry="30" fill="${bodyColor}" stroke="${outlineColor}" stroke-width="2"/><ellipse cx="128" cy="30" rx="14" ry="30" fill="${bodyColor}" stroke="${outlineColor}" stroke-width="2"/><ellipse cx="52" cy="30" rx="7" ry="22" fill="pink" opacity=".6"/><ellipse cx="128" cy="30" rx="7" ry="22" fill="pink" opacity=".6"/>`;
+  else if(s.telinga==="bundar") earPath=`<circle cx="48" cy="46" r="20" fill="${bodyColor}" stroke="${outlineColor}" stroke-width="2"/><circle cx="132" cy="46" r="20" fill="${bodyColor}" stroke="${outlineColor}" stroke-width="2"/>`;
+  else earPath=`<polygon points="48,60 36,18 60,60" fill="${bodyColor}" stroke="${outlineColor}" stroke-width="2"/><polygon points="132,60 120,18 144,60" fill="${bodyColor}" stroke="${outlineColor}" stroke-width="2"/>`;
+  // Eyes
+  let eyePath="";
+  if(s.mata==="senang") eyePath=`<path d="M68,65 Q74,58 80,65" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M100,65 Q106,58 112,65" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  else if(s.mata==="sipit") eyePath=`<line x1="64" y1="66" x2="82" y2="62" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/><line x1="98" y1="62" x2="116" y2="66" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/>`;
+  else eyePath=`<circle cx="74" cy="64" r="10" fill="#1e293b"/><circle cx="106" cy="64" r="10" fill="#1e293b"/><circle cx="77" cy="61" r="3" fill="white"/><circle cx="109" cy="61" r="3" fill="white"/>`;
+  // Mouth
+  let mouthPath="";
+  if(s.mulut==="senyum") mouthPath=`<path d="M70,90 Q90,108 110,90" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  else if(s.mulut==="terbuka") mouthPath=`<ellipse cx="90" cy="96" rx="18" ry="10" fill="#1e293b"/><ellipse cx="90" cy="96" rx="14" ry="6" fill="#e11d48"/>`;
+  else mouthPath=`<path d="M70,90 Q90,108 110,90" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="76" y="90" width="28" height="8" rx="2" fill="white"/>`;
+  // Body
+  const bodyShape=`<ellipse cx="90" cy="155" rx="44" ry="42" fill="${bodyColor}" stroke="${outlineColor}" stroke-width="3"/><ellipse cx="68" cy="175" rx="14" ry="20" fill="${bodyColor}" stroke="${outlineColor}" stroke-width="2"/><ellipse cx="112" cy="175" rx="14" ry="20" fill="${bodyColor}" stroke="${outlineColor}" stroke-width="2"/>`;
+  // Accessory
+  let accPath="";
+  if(s.aksesoris==="kopi") accPath=`<rect x="108" y="140" width="28" height="22" rx="4" fill="#d97706" stroke="#92400e" stroke-width="2"/><path d="M136,148 Q144,148 144,156 Q144,164 136,164" stroke="#92400e" stroke-width="2" fill="none"/><rect x="108" y="136" width="28" height="6" rx="2" fill="#b45309"/><path d="M116,132 Q118,126 120,132" stroke="#6b7280" stroke-width="1.5" fill="none"/><path d="M124,130 Q126,124 128,130" stroke="#6b7280" stroke-width="1.5" fill="none"/>`;
+  else if(s.aksesoris==="topi") accPath=`<ellipse cx="90" cy="23" rx="44" ry="8" fill="${outlineColor}"/><rect x="58" y="0" width="64" height="24" rx="6" fill="${outlineColor}"/><circle cx="72" cy="6" r="5" fill="#f472b6"/><circle cx="84" cy="4" r="4" fill="#fbbf24"/><circle cx="96" cy="3" r="5" fill="#34d399"/>`;
+  else accPath=`<path d="M62,138 C40,110 32,85 55,75 C68,70 76,80 72,95 C86,70 98,70 100,85 C108,68 120,70 118,88 C135,78 138,98 124,110 C118,130 90,148 62,138 Z" fill="#4ade80" stroke="#16a34a" stroke-width="2"/>`;
+
+  const nose=`<ellipse cx="90" cy="78" rx="6" ry="4" fill="${outlineColor}" opacity=".5"/>`;
+  document.getElementById('mascotSvg').innerHTML=earPath+headPath+bodyShape+nose+eyePath+mouthPath+accPath;
+}
+
+function buildOptions(){
+  const panel=document.getElementById('optionsPanel');
+  panel.innerHTML='';
+  CATS.forEach(cat=>{
+    const block=document.createElement('div');
+    block.className='cat-block';
+    block.innerHTML=`<div class="cat-label">${cat.label}</div><div class="cat-options" id="cat-${cat.id}"></div>`;
+    const wrap=block.querySelector('.cat-options');
+    cat.opts.forEach(opt=>{
+      const btn=document.createElement('button');
+      btn.className='opt-btn'+(sel[cat.id]===opt?' active':'');
+      btn.textContent=opt.charAt(0).toUpperCase()+opt.slice(1);
+      btn.addEventListener('click',()=>{
+        sel[cat.id]=opt;
+        block.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        drawMascot();
+      });
+      wrap.appendChild(btn);
+    });
+    panel.appendChild(block);
+  });
+}
+
+window.doneClick=function(){
+  const brief=BRIEFS[briefIdx];
+  const req=brief.required;
+  let matched=0,total=Object.keys(req).length;
+  const checks=Object.keys(req).map(k=>{
+    const ok=sel[k]===req[k];
+    if(ok)matched++;
+    return {key:k,ok,val:sel[k],expected:req[k]};
+  });
+  const pts=matched*10;
+  totalScore+=pts;
+  document.getElementById('scoreDisp').textContent=Math.min(totalScore,100);
+  const nextBriefIdx=briefIdx+1;
+  showResultOverlay(checks,pts,matched,total,nextBriefIdx<BRIEFS.length?()=>loadBrief(nextBriefIdx):()=>finalResult());
+};
+
+function showResultOverlay(checks,pts,matched,total,onNext){
+  const ov=document.createElement('div');
+  ov.className='result-overlay';
+  ov.innerHTML=`
+    <div class="result-box">
+      <div style="font-size:2.5rem">${matched===total?'🌟':'💡'}</div>
+      <div class="result-score-big">${pts}/${total*10} poin</div>
+      <p style="opacity:.7;font-size:.9rem;margin-bottom:12px">${matched}/${total} elemen sesuai brief</p>
+      <div class="elem-check">
+        ${checks.map(c=>`<div class="elem-item"><span>${c.ok?'✅':'❌'}</span><span>${c.key}: <strong>${c.val}</strong>${c.ok?'':' (butuh: '+c.expected+')'}</span></div>`).join('')}
+      </div>
+      <button class="result-action-btn" id="nextBriefBtn">${briefIdx+1<BRIEFS.length?'Maskot Berikutnya →':'Lihat Skor Akhir'}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  document.getElementById('nextBriefBtn').onclick=()=>{ov.remove();onNext();};
+}
+
+function loadBrief(idx){
+  briefIdx=idx;
+  sel={kepala:"bulat",telinga:"bundar",mata:"senang",mulut:"senyum",aksesoris:"topi",warna:"hijau"};
+  const b=BRIEFS[idx];
+  document.getElementById('briefContent').textContent=b.text;
+  document.getElementById('briefTags').innerHTML=b.tags.map(t=>`<div class="brief-tag">${t}</div>`).join('');
+  document.getElementById('progFill').style.width='50%';
+  document.getElementById('progText').textContent='Maskot '+(idx+1)+'/2';
+  buildOptions();
+  drawMascot();
+}
+
+function finalResult(){
+  const finalScore=Math.min(totalScore,100);
+  const pass=finalScore>=60;
+  const ov=document.createElement('div');
+  ov.className='result-overlay';
+  ov.innerHTML=`
+    <div class="result-box">
+      <div style="font-size:4rem;margin-bottom:8px">${pass?'🏆':'💪'}</div>
+      <div class="result-score-big">${finalScore}/100</div>
+      <p style="opacity:.7;font-size:.95rem;margin:12px 0">${pass?'Kamu memahami prinsip ilustrasi maskot profesional!':'Perhatikan brief dengan lebih teliti dan coba lagi!'}</p>
+      <button class="result-action-btn" onclick="document.getElementById('scoreInput').value=${finalScore};document.getElementById('scoreForm').submit()">
+        ${pass?'<i class="fa fa-arrow-right"></i> Lanjut':'<i class="fa fa-redo"></i> Coba Lagi'}
+      </button>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+// Init
+const b=BRIEFS[0];
+document.getElementById('briefContent').textContent=b.text;
+document.getElementById('briefTags').innerHTML=b.tags.map(t=>`<div class="brief-tag">${t}</div>`).join('');
+buildOptions();
+drawMascot();
+})();
+</script>
+</body>
+</html>

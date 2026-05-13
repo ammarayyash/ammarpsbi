@@ -1,0 +1,152 @@
+{% extends "dashboard/admin/base_admin.html" %}
+
+{% block title %}Kelola Kursus{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">/</span>
+<span class="current">Kelola Kursus</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div>
+        <h1>Kelola Kursus</h1>
+        <p>Buat, edit, dan kelola semua kursus pembelajaran. Setiap kursus berisi beberapa misi sebagai sub-materi.</p>
+    </div>
+    <a href="{% url 'admin_course_create' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Tambah Kursus
+    </a>
+</div>
+
+<div class="admin-table-container">
+    <div class="admin-table-header">
+        <h2>Daftar Kursus</h2>
+        <div class="admin-search">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" placeholder="Cari kursus..." id="courseSearch" onkeyup="filterCourses()">
+        </div>
+    </div>
+    <table class="admin-table" id="coursesTable">
+        <thead>
+            <tr>
+                <th style="min-width: 60px;">Urutan</th>
+                <th style="min-width: 60px;">Ikon</th>
+                <th style="min-width: 240px;">Kursus</th>
+                <th style="min-width: 110px;">Jumlah Misi</th>
+                <th style="min-width: 100px;">Status</th>
+                <th style="min-width: 120px;">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in courses %}
+            <tr>
+                <td style="text-align: center;">
+                    <span class="question-number">#{{ c.order }}</span>
+                </td>
+                <td style="text-align: center;">
+                    <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15)); display: flex; align-items: center; justify-content: center; color: #818cf8; font-size: 1.1rem;">
+                        <i class="fa-solid {{ c.icon }}"></i>
+                    </div>
+                </td>
+                <td>
+                    <div>
+                        <h4 style="font-weight: 600; margin-bottom: 4px;">{{ c.title }}</h4>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">{{ c.description|truncatechars:60 }}</span>
+                    </div>
+                </td>
+                <td style="white-space: nowrap;">
+                    <a href="{% url 'admin_missions' %}?course_id={{ c.id }}" class="status-badge staff" style="text-decoration: none;">
+                        <i class="fa-solid fa-bullseye"></i>&nbsp; {{ c.mission_count }} Misi
+                    </a>
+                </td>
+                <td style="white-space: nowrap;">
+                    {% if c.is_active %}
+                    <span class="status-badge active" style="background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2); padding: 4px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;">
+                        <i class="fa-solid fa-circle-check"></i> Aktif
+                    </span>
+                    {% else %}
+                    <span class="status-badge" style="background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); padding: 4px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;">
+                        <i class="fa-solid fa-circle-xmark"></i> Nonaktif
+                    </span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="{% url 'admin_missions' %}?course_id={{ c.id }}" class="btn btn-ghost btn-icon" title="Lihat Misi">
+                            <i class="fa-solid fa-bullseye"></i>
+                        </a>
+                        <a href="{% url 'admin_course_edit' c.id %}" class="btn btn-ghost btn-icon" title="Edit Kursus">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
+                        <button
+                            type="button"
+                            class="btn btn-danger btn-icon"
+                            title="Hapus Kursus"
+                            onclick="confirmDelete('{{ c.title|escapejs }}', '{% url 'admin_course_delete' c.id %}')"
+                        >
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">
+                    <div class="admin-empty-state">
+                        <i class="fa-solid fa-book-open"></i>
+                        <h3>Belum ada kursus</h3>
+                        <p>Klik "Tambah Kursus" untuk membuat kursus pertama.</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="delete-confirm-overlay" id="deleteModal">
+    <div class="delete-confirm-box">
+        <div class="delete-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3>Hapus Kursus?</h3>
+        <p>Apakah kamu yakin ingin menghapus kursus <strong id="deleteItemName"></strong>? Semua misi di dalam kursus ini akan kehilangan relasi kursusnya.</p>
+        <div class="delete-confirm-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">Batal</button>
+            <form id="deleteForm" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fa-solid fa-trash"></i> Hapus
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterCourses() {
+    const query = document.getElementById('courseSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('#coursesTable tbody tr');
+    rows.forEach(function(row) {
+        row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+    });
+}
+
+function confirmDelete(name, url) {
+    document.getElementById('deleteItemName').textContent = name;
+    document.getElementById('deleteForm').action = url;
+    document.getElementById('deleteModal').classList.add('active');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('active');
+}
+
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+});
+</script>
+{% endblock %}

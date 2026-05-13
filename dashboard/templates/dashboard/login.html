@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Creative Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'dashboard/style.css?v=2.2' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/auth.css' %}">
+</head>
+<body class="auth-body">
+    <div class="auth-container">
+        <div class="auth-card glass-panel">
+            <div class="auth-logo">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <h2>Selamat Datang Kembali!</h2>
+            <p>Silakan masuk untuk melanjutkan belajar.</p>
+
+            {% if messages %}
+            <div style="margin-bottom: 20px;">
+                {% for message in messages %}
+                <div style="padding: 10px; border-radius: 8px; margin-bottom: 10px; color: white; background: {% if message.tags == 'error' %}rgba(255, 71, 87, 0.9){% else %}rgba(39, 174, 96, 0.9){% endif %}; text-align: left; font-size: 0.9rem;">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form class="auth-form" method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+                <div class="input-group">
+                    <label>Email</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" name="email" placeholder="nama@email.com" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" name="password" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <div class="auth-options">
+                    <label>
+                        <input type="checkbox" name="remember"> Ingat Saya
+                    </label>
+                    <a href="{% url 'forgot_password' %}">Lupa Password?</a>
+                </div>
+                <button type="submit" class="auth-btn">Masuk Sekarang</button>
+            </form>
+            <div class="auth-footer">
+                Belum punya akun? <a href="{% url 'register' %}">Daftar di sini</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

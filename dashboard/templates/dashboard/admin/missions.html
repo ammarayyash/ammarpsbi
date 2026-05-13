@@ -1,0 +1,165 @@
+{% extends "dashboard/admin/base_admin.html" %}
+
+{% block title %}Kelola Misi{% endblock %}
+
+{% block breadcrumb %}
+<span class="sep">/</span>
+<span class="current">Kelola Misi</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div>
+        <h1>Kelola Misi{% if filter_course %} — {{ filter_course.title }}{% endif %}</h1>
+        <p>Buat, edit, dan kelola semua misi pembelajaran.{% if filter_course %} <a href="{% url 'admin_missions' %}" style="color: #818cf8;">Tampilkan semua misi &rarr;</a>{% endif %}</p>
+    </div>
+    <a href="{% url 'admin_mission_create' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Tambah Misi
+    </a>
+</div>
+
+<div class="admin-table-container">
+    <div class="admin-table-header">
+        <h2>Daftar Misi</h2>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <select onchange="if(this.value){window.location='?course_id='+this.value}else{window.location='{% url 'admin_missions' %}'}" 
+                style="padding: 8px 14px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-family: inherit; font-size: 0.85rem; cursor: pointer;">
+                <option value="" style="color: black;">Semua Kursus</option>
+                {% for c in courses %}
+                <option value="{{ c.id }}" {% if filter_course and filter_course.id == c.id %}selected{% endif %} style="color: black;">{{ c.title }}</option>
+                {% endfor %}
+            </select>
+            <div class="admin-search">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" placeholder="Cari misi..." id="missionSearch" onkeyup="filterMissions()">
+            </div>
+        </div>
+    </div>
+    <table class="admin-table" id="missionsTable">
+        <thead>
+            <tr>
+                <th style="min-width: 60px;">Urutan</th>
+                <th style="min-width: 240px;">Misi</th>
+                <th style="min-width: 140px;">Kursus</th>
+                <th style="min-width: 110px;">Jumlah Soal</th>
+                <th style="min-width: 110px;">XP Reward</th>
+                <th style="min-width: 120px;">Diselesaikan</th>
+                <th style="min-width: 120px;">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in missions %}
+            <tr>
+                <td style="text-align: center;">
+                    <span class="question-number">#{{ m.order }}</span>
+                </td>
+                <td>
+                    <div>
+                        <h4 style="font-weight: 600; margin-bottom: 4px;">{{ m.title }}</h4>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">{{ m.description|truncatechars:60 }}</span>
+                    </div>
+                </td>
+                <td style="white-space: nowrap;">
+                    {% if m.course %}
+                    <a href="{% url 'admin_missions' %}?course_id={{ m.course.id }}" style="text-decoration: none; display: flex; align-items: center; gap: 8px; color: #a5b4fc; font-size: 0.85rem;">
+                        <i class="fa-solid {{ m.course.icon }}" style="font-size: 0.9rem;"></i>
+                        {{ m.course.title|truncatechars:20 }}
+                    </a>
+                    {% else %}
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">—</span>
+                    {% endif %}
+                </td>
+                <td style="white-space: nowrap;">
+                    <span class="status-badge staff">
+                        <i class="fa-solid fa-list-check"></i>&nbsp; {{ m.question_count }} Soal
+                    </span>
+                </td>
+                <td style="white-space: nowrap;">
+                    <div class="xp-badge">
+                        <i class="fa-solid fa-star"></i>
+                        &nbsp;{{ m.xp_reward }} XP
+                    </div>
+                </td>
+                <td style="white-space: nowrap; padding-left: 24px;">
+                    {{ m.completed_count }}x
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="{% url 'admin_questions' m.id %}" class="btn btn-ghost btn-icon" title="Kelola Soal">
+                            <i class="fa-solid fa-list-check"></i>
+                        </a>
+                        <a href="{% url 'admin_mission_edit' m.id %}" class="btn btn-ghost btn-icon" title="Edit Misi">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
+                        <button
+                            type="button"
+                            class="btn btn-danger btn-icon"
+                            title="Hapus Misi"
+                            onclick="confirmDelete('{{ m.title|escapejs }}', '{% url 'admin_mission_delete' m.id %}')"
+                        >
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7">
+                    <div class="admin-empty-state">
+                        <i class="fa-solid fa-bullseye"></i>
+                        <h3>Belum ada misi</h3>
+                        <p>Klik "Tambah Misi" untuk membuat misi pertama.</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="delete-confirm-overlay" id="deleteModal">
+    <div class="delete-confirm-box">
+        <div class="delete-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3>Hapus Misi?</h3>
+        <p>Apakah kamu yakin ingin menghapus misi <strong id="deleteItemName"></strong>? Semua soal dan progress pengguna terkait misi ini akan dihapus permanen.</p>
+        <div class="delete-confirm-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">Batal</button>
+            <form id="deleteForm" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fa-solid fa-trash"></i> Hapus
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterMissions() {
+    const query = document.getElementById('missionSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('#missionsTable tbody tr');
+    rows.forEach(function(row) {
+        row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+    });
+}
+
+function confirmDelete(name, url) {
+    document.getElementById('deleteItemName').textContent = name;
+    document.getElementById('deleteForm').action = url;
+    document.getElementById('deleteModal').classList.add('active');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('active');
+}
+
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+});
+</script>
+{% endblock %}
