@@ -78,7 +78,9 @@ Gunakan checklist ini untuk memastikan semua sudah siap sebelum deploy.
 - [ ] Buat virtualenv: `mkvirtualenv --python=/usr/bin/python3.10 venv`
 - [ ] Install packages: `pip install -r requirements.txt`
 - [ ] Migrate database: `python manage.py migrate`
-- [ ] Collect static: `python manage.py collectstatic --noinput`
+- [ ] **Collect static files:** `python manage.py collectstatic --noinput --clear`
+  - [ ] Pastikan output menunjukkan "X static files collected successfully"
+  - [ ] Verify folder `staticfiles/` sudah ter-create
 
 ### Web Tab Configuration
 - [ ] Add new web app → Manual Configuration
@@ -106,7 +108,9 @@ Gunakan checklist ini untuk memastikan semua sudah siap sebelum deploy.
 ## 🧪 Post-Deployment Testing
 
 - [ ] Website bisa diakses
-- [ ] Login page muncul
+- [ ] **CSS/Styling muncul dengan benar** (layout, warna, font)
+- [ ] JavaScript berfungsi (hover effects, animations)
+- [ ] Login page terlihat rapi (penting!)
 - [ ] Static files (CSS, JS) muncul dengan benar
 - [ ] Media files bisa diakses
 - [ ] Admin panel (/admin) bisa diakses

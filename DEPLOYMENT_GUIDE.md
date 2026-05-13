@@ -97,9 +97,11 @@ pip install -r requirements.txt
 # Migrate database
 python manage.py migrate
 
-# Collect static files
-python manage.py collectstatic --noinput
+# Collect static files (VERY IMPORTANT!)
+python manage.py collectstatic --noinput --clear
 ```
+
+**⚠️ PENTING:** Step `collectstatic` ini HARUS dijalankan, atau CSS/JavaScript tidak akan muncul!
 
 ### **Step 6: Configure Web App**
 

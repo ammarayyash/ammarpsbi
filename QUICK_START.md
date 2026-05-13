@@ -60,8 +60,10 @@ cd ammarpsbi
 mkvirtualenv --python=/usr/bin/python3.10 venv
 pip install -r requirements.txt
 python manage.py migrate
-python manage.py collectstatic --noinput
+python manage.py collectstatic --noinput --clear
 ```
+
+**⚠️ PENTING:** `collectstatic` harus dijalankan atau CSS/JS tidak akan muncul!
 
 ### **2. Web Tab**
 - **Virtualenv path:** `/home/USERNAME/.virtualenvs/venv`
